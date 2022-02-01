@@ -411,7 +411,7 @@ function draw() {
         translate(rectEl.x, rectEl.y, rectEl.z);
         fill(hue, saturation, brightness, opacity * (brightness / 50) * (saturation * 100));
         stroke(hue, specificSat, specificBright, (1 - opacity) * speedFactor);
-        if (rectEl.s > 24 - (10 * avg[0]) || rectEl.s < 12 + (8 * avg[1])) box(rectEl.s);
+        if (rectEl.s > 30 - (20 * avg[0]) || rectEl.s < 6 + (10 * avg[1])) box(rectEl.s);
         translate(-rectEl.x, -rectEl.y, -rectEl.z);
 
         let bounds = random(.001, .005);
@@ -494,7 +494,7 @@ function draw() {
         let idCount = rects.filter(rect => rect.rectId === rectId).length;
         if (idCount > random(50, 100) || rects.length === 0) {
             rectId++;
-            let maxSize = 24;
+            let maxSize = 22;
             x = random(-width / 2, width / 2);
             y = random(-height / 2, height / 2);
             z = random(-width, width);

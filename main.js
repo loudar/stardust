@@ -38,7 +38,8 @@ let sound = [], amplitude, fft;
 let bass, lowMid, mid, highMid, treble;
 const showVisualizer = true;
 let savedMillis, yRotation;
-let waitForNextPeak = true;
+let waitForNextPeak = false;
+let audioPlayed = false;
 
 let cam = {
     x: 0,
@@ -73,6 +74,7 @@ function createTracklist(sounds) {
     sounds.forEach(soundName => {
         let soundEl = document.createElement("div");
         soundEl.classList.add("trackListTrack");
+        soundEl.id = i;
         soundEl.innerHTML = soundName;
         let toPlay = i;
         soundEl.onclick = function() {
@@ -94,9 +96,13 @@ async function togglePlay() {
 
 async function startPlay() {
     await getAudioContext().resume();
-    if (getAudioContext().state !== 'running') {
-        sound[currentSound].play();
+    if (getAudioContext().state !== 'running' || !audioPlayed) {
+        sound[currentSound].play(0);
+        while (!sound[currentSound].isPlaying()) {
+            // wait
+        }
     }
+    audioPlayed = true;
 }
 
 function playNewSound() {
@@ -109,6 +115,18 @@ function playNewSound() {
     if (getAudioContext().state !== 'running') {
         togglePlay();
     }
+    updateTracklist();
+}
+
+function updateTracklist() {
+    let tracklistTracks = document.querySelectorAll(".trackListTrack");
+    tracklistTracks.forEach(trackListTrack => {
+        if (parseInt(trackListTrack.id) === currentSound) {
+            trackListTrack.classList.add("active");
+        } else {
+            trackListTrack.classList.remove("active");
+        }
+    });
 }
 
 function playTrack(listIndex) {
@@ -168,6 +186,7 @@ function setup() {
     stroke(0);
     getAnalyzers();
     updateTitle(sounds[currentSound]);
+    updateTracklist();
     background(0, 1);
     savedMillis = millis();
     yRotation = 0;
@@ -208,10 +227,10 @@ function draw() {
 
     let treshhold = [];
     treshhold[0] = .8;
-    treshhold[1] = .9;
+    treshhold[1] = .6;
     if (avg[0] < treshhold[0]) { avg[0] = 0 } else { avg[0] = (avg[0] - treshhold[0]) / (1 - treshhold[0]) }
-    if (avg[1] < treshhold[1]) { avg[1] = 0 } else { avg[1] = (avg[1] - treshhold[1]) / (1 - treshhold[1]) }
-    let speed = min(1, avg[0] + avg[1]);
+    if (avg[1] < treshhold[1]) { avg[1] = 0 } else { avg[1] = pow((avg[1] - treshhold[1]) / (1 - treshhold[1]), 2) }
+    let speed = min(1, (avg[0] + avg[1]) * .5);
     let speedFactor = pow((speed + .5), 8);
     let brightness = speed * 50;
     let saturation = speed * 100;
@@ -221,11 +240,12 @@ function draw() {
         bgBrightness = 0;
     }
     // change hue if lucky :D
-    if (speed > .96 && random(0, 100) > 98 && !waitForNextPeak) {
+    let peakTreshhold = .99;
+    if (speed > peakTreshhold && !waitForNextPeak) {
         hueShift += 120;
         if (hueShift >= 360) hueShift -= 360;
         waitForNextPeak = true;
-    } else if (speed < .92) {
+    } else if (speed < peakTreshhold) {
         waitForNextPeak = false;
     }
 
@@ -243,7 +263,7 @@ function draw() {
     camera(0, 0, (width / 2) + (speed * (height * .05)));
 
     let millisDif = millis() - savedMillis;
-    yRotation = yRotation + (millisDif / 200) + speed * .5;
+    yRotation = yRotation + (millisDif / 200) + speed * .3;
     angleMode(DEGREES);
     rotateY(yRotation);
     savedMillis = millis();
@@ -261,7 +281,7 @@ function draw() {
         // range bars
         //fill(0, 100, 100, 255);
         fill(0, 0);
-        strokeWeight(1);
+        strokeWeight(1.5);
         stroke(0, 0, 100, 255);
         let oddity = (freq.length % 2) * visWidth * 1.125;
         let freqOffset = -((freq.length - 1) / 2) * visWidth * 1.25 - oddity;

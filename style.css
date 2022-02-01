@@ -2,6 +2,7 @@
     --background: #111;
     --background-hover: #222;
     --foreground: white;
+    --active: #0f6;
 }
 
 * {
@@ -41,6 +42,7 @@ body {
     flex-direction: column;
     border: 1px solid var(--foreground);
     overflow: auto;
+    padding: 1px;
 }
 
 .trackListToggle {
@@ -55,6 +57,12 @@ body {
     padding: 5px 10px;
     background: var(--background);
     cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.trackListTrack.active {
+    border-color: var(--active);
+    color: var(--active);
 }
 
 .trackListTrack:hover {

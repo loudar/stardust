@@ -38,6 +38,7 @@ let sound = [], amplitude, fft;
 let bass, lowMid, mid, highMid, treble;
 const showVisualizer = true;
 let savedMillis, yRotation;
+let waitForNextPeak = true;
 
 let cam = {
     x: 0,
@@ -59,6 +60,7 @@ window.onkeydown = function(ev) {
     if (ev.key === "ArrowRight") playNextSound();
     if (ev.key === "ArrowLeft") playPrevSound();
     if (ev.key === " ") togglePlay();
+    if (ev.key === "t") toggleTrackList();
 }
 
 function updateTitle(trackName) {
@@ -218,6 +220,14 @@ function draw() {
     } else {
         bgBrightness = 0;
     }
+    // change hue if lucky :D
+    if (speed > .96 && random(0, 100) > 98 && !waitForNextPeak) {
+        hueShift += 120;
+        if (hueShift >= 360) hueShift -= 360;
+        waitForNextPeak = true;
+    } else if (speed < .92) {
+        waitForNextPeak = false;
+    }
 
     background(0);
 
@@ -233,7 +243,7 @@ function draw() {
     camera(0, 0, (width / 2) + (speed * (height * .05)));
 
     let millisDif = millis() - savedMillis;
-    yRotation = yRotation + (millisDif / 500) + speedFactor * .025;
+    yRotation = yRotation + (millisDif / 200) + speed * .5;
     angleMode(DEGREES);
     rotateY(yRotation);
     savedMillis = millis();

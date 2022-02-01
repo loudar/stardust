@@ -1,3 +1,8 @@
+const sounds = [
+    "filename without extension",
+    "filename without extension2"
+];
+
 let circles = [];
 const maxCircles = 200;
 let rects = [];
@@ -42,12 +47,6 @@ let cam = {
 };
 
 let currentSound = 0;
-const sounds = [
-    "False Noise - Kek",
-    "Barely Alive - Jungle Demon",
-    "kombinator v2",
-    "BlackGummy - KT"
-];
 const volume = 1;
 
 window.onresize = function() {

@@ -110,11 +110,9 @@ function playNewSound() {
     while (!sound[currentSound].isPlaying()) {
         // wait
     }
+    if (getAudioContext().state !== 'running') getAudioContext().resume();
     getAnalyzers();
     updateTitle(sounds[currentSound]);
-    if (getAudioContext().state !== 'running') {
-        togglePlay();
-    }
     updateTracklist();
 }
 

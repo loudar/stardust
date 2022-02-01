@@ -1,0 +1,77 @@
+:root {
+    --background: #111;
+    --background-hover: #222;
+    --foreground: white;
+}
+
+* {
+    font-family: Arial, serif;
+}
+
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    width: 100%;
+    display: flex;
+    position: relative;
+}
+
+#p5_loading {
+    top: 30px;
+    padding: 5px 10px;
+}
+
+.trackTitle {
+    position: absolute;
+    font-size: 40px;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+}
+
+.trackListContent {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    max-height: calc(100% - 4px);
+    width: max-content;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--foreground);
+    overflow: auto;
+}
+
+.trackListToggle {
+    position: absolute;
+    padding: 5px 10px;
+    background: var(--background-hover);
+    border: 1px solid var(--foreground);
+    cursor: pointer;
+}
+
+.trackListTrack {
+    padding: 5px 10px;
+    background: var(--background);
+    cursor: pointer;
+}
+
+.trackListTrack:hover {
+    background: var(--background-hover);
+}
+
+progress::-moz-progress-bar, progress::-webkit-progress-value {
+    background: var(--foreground);
+}
+progress {
+    position: absolute;
+    width: 30%;
+    height: 10px;
+    margin: calc(50vh + 20px) auto auto calc(50vw - 15vw);
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--foreground);
+    border-radius: 5px;
+    opacity: 0;
+}

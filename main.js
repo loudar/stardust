@@ -2,6 +2,8 @@ const sounds = [
     "example sound 1",
     "example sound 2",
 ];
+let i;
+createTracklist(sounds);
 
 let circles = [];
 const maxCircles = 200;
@@ -33,7 +35,6 @@ let autoplay = false;
 const drawCircles = true;
 const drawRectangles = true;
 let sound = [], amplitude, fft;
-let i;
 let bass, lowMid, mid, highMid, treble;
 const showVisualizer = true;
 let savedMillis, yRotation;
@@ -64,39 +65,68 @@ function updateTitle(trackName) {
     document.querySelector("h1").innerHTML = trackName;
 }
 
+function createTracklist(sounds) {
+    let tracklist = document.querySelector(".trackListContent");
+    i = 0;
+    sounds.forEach(soundName => {
+        let soundEl = document.createElement("div");
+        soundEl.classList.add("trackListTrack");
+        soundEl.innerHTML = soundName;
+        let toPlay = i;
+        soundEl.onclick = function() {
+            playTrack(toPlay);
+        };
+        tracklist.appendChild(soundEl);
+        i++;
+    });
+}
+
 async function togglePlay() {
     autoplay = true;
     if (getAudioContext().state === 'running') {
         await getAudioContext().suspend();
     } else {
-        await getAudioContext().resume();
-        if (getAudioContext().state !== 'running') {
-            sound[currentSound].play();
-        }
+        await startPlay();
     }
+}
+
+async function startPlay() {
+    await getAudioContext().resume();
+    if (getAudioContext().state !== 'running') {
+        sound[currentSound].play();
+    }
+}
+
+function playNewSound() {
+    sound[currentSound].play(0);
+    while (!sound[currentSound].isPlaying()) {
+        // wait
+    }
+    getAnalyzers();
+    updateTitle(sounds[currentSound]);
+    if (getAudioContext().state !== 'running') {
+        togglePlay();
+    }
+}
+
+function playTrack(listIndex) {
+    sound[currentSound].stop();
+    currentSound = max(0, min(sound.length, listIndex));
+    playNewSound();
 }
 
 function playNextSound() {
     sound[currentSound].stop();
     currentSound++;
     if (currentSound > sound.length - 1) currentSound = 0;
-    sound[currentSound].play(0);
-    while (!sound[currentSound].isPlaying()) {
-        // wait
-    }
-    getAnalyzers();
-    updateTitle(sounds[currentSound]);
+    playNewSound();
 }
 
 function playPrevSound() {
     sound[currentSound].stop();
-    currentSound = max(0, currentSound - 1);
-    sound[currentSound].play(0);
-    while (!sound[currentSound].isPlaying()) {
-        // wait
-    }
-    getAnalyzers();
-    updateTitle(sounds[currentSound]);
+    currentSound = currentSound - 1;
+    if (currentSound < 0) currentSound = sound.length;
+    playNewSound();
 }
 
 function getAnalyzers() {
@@ -106,22 +136,26 @@ function getAnalyzers() {
     fft.setInput(sound[currentSound]);
 }
 
-function showProgress(progress) {
+function showProgress(value) {
+    let progress = document.querySelector("progress");
+    progress.value = value;
     //console.log("sound loaded " + (progress * 100) + " %.");
 }
 
-function preload() {
+async function preload() {
     soundFormats('mp3', 'ogg');
-    i = 0;
-    sounds.forEach(soundName => {
+    let progress = document.querySelector("progress");
+    progress.style.opacity = "1";
+    for (i = 0; i < sounds.length; i++) {
+        let soundName = sounds[i];
         sound[i] = loadSound("sounds/"+soundName, function() {
-            console.log("File "+soundName+" loaded.");
+            //console.log("File "+soundName+" loaded.");
         }, function() {
-            text('Error loading audio.', 10, 50);
+            throw new Error("Error loading audio file: "+soundName);
         }, showProgress);
         sound[i].setVolume(volume);
-        i++;
-    });
+    }
+    progress.style.opacity = "0";
 }
 
 function setup() {
@@ -170,9 +204,11 @@ function draw() {
         (freq[3] + freq[4]) / (255),
     ];
 
-    let treshhold = .8;
-    if (avg[0] < treshhold) { avg[0] = 0 } else { avg[0] = (avg[0] - treshhold) / (1 - treshhold) }
-    if (avg[1] < treshhold) { avg[1] = 0 } else { avg[1] = (avg[1] - treshhold) / (1 - treshhold) }
+    let treshhold = [];
+    treshhold[0] = .8;
+    treshhold[1] = .9;
+    if (avg[0] < treshhold[0]) { avg[0] = 0 } else { avg[0] = (avg[0] - treshhold[0]) / (1 - treshhold[0]) }
+    if (avg[1] < treshhold[1]) { avg[1] = 0 } else { avg[1] = (avg[1] - treshhold[1]) / (1 - treshhold[1]) }
     let speed = min(1, avg[0] + avg[1]);
     let speedFactor = pow((speed + .5), 8);
     let brightness = speed * 50;
@@ -194,10 +230,10 @@ function draw() {
             cam.vz = 0;
         }
     }
-    camera(0, 0, (width / 2) + (speed * (height * .1)));
+    camera(0, 0, (width / 2) + (speed * (height * .05)));
 
     let millisDif = millis() - savedMillis;
-    yRotation = yRotation + (millisDif / 100) + speedFactor * .05;
+    yRotation = yRotation + (millisDif / 500) + speedFactor * .025;
     angleMode(DEGREES);
     rotateY(yRotation);
     savedMillis = millis();
@@ -205,7 +241,7 @@ function draw() {
     /* Testing bars*/
     if (showVisualizer) {
         let visWidth = 40;
-        let visHeight = 100;
+        let visHeight = height / 4;
 
         /* bounding box
         stroke(0, 100, 100, 1);
@@ -213,15 +249,23 @@ function draw() {
         rect(-(((freq.length - 1) / 2) * visWidth * 1.25) - 1, -(visHeight + 1), (freq.length * visWidth * 1.25) + 2, visHeight + 2);*/
 
         // range bars
-        fill(0, 100, 100, 255);
-        stroke(0, 100, 100, 0);
+        //fill(0, 100, 100, 255);
+        fill(0, 0);
+        strokeWeight(1);
+        stroke(0, 0, 100, 255);
         let oddity = (freq.length % 2) * visWidth * 1.125;
         let freqOffset = -((freq.length - 1) / 2) * visWidth * 1.25 - oddity;
         freq.forEach(range => {
             range /= 255;
             freqOffset += visWidth * 1.25;
-            rect(freqOffset, -visHeight * range, visWidth, visHeight * range);
+            let x = freqOffset;
+            let y = 0;//-visHeight * range;
+            translate(x, y, 0);
+            box(visWidth, visHeight * range, visWidth);
+            //rect(visWidth, visHeight * range);
+            translate(-x, -y, 0);
         });
+        strokeWeight(.5);
     }
 
     if (drawCircles) {

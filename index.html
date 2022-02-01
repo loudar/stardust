@@ -7,28 +7,25 @@
         <script src=https://cdn.JsDelivr.net/npm/p5></script>
         <script src=https://cdn.JsDelivr.net/npm/p5/lib/addons/p5.dom.min.js></script>
         <script src=https://cdn.JsDelivr.net/npm/p5/lib/addons/p5.sound.min.js></script>
-        <style>
-            * {
-                font-family: Arial, serif;
-            }
-
-            body {
-                margin: 0;
-                background: black;
-                color: white;
-            }
-
-            .trackTitle {
-                position: absolute;
-                font-size: 40px;
-                bottom: 0;
-                width: 100%;
-                text-align: center;
-            }
-        </style>
+        <link href="style.css" rel="stylesheet" type="text/css">
     </head>
     <body>
         <script src="main.js" type="module"></script>
+        <script>
+            function toggleTrackList() {
+                let tracklist = document.querySelector(".trackListContent");
+                if (tracklist.style.display === "none") {
+                    tracklist.style.display = "initial";
+                } else {
+                    tracklist.style.display = "none";
+                }
+            }
+        </script>
         <h1 class="trackTitle"></h1>
+        <div class="trackList">
+            <div class="trackListContent"></div>
+            <div class="trackListToggle" onclick="toggleTrackList()">Tracks</div>
+        </div>
+        <progress value="0" max="1"></progress>
     </body>
 </html>

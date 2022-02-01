@@ -1,6 +1,6 @@
 const sounds = [
-    "filename without extension",
-    "filename without extension2"
+    "example sound 1",
+    "example sound 2",
 ];
 
 let circles = [];
@@ -28,6 +28,7 @@ const bpm = 126;
 const bps = bpm / 60;
 const spb = (1 / bps);
 let bgBrightness;
+let autoplay = false;
 
 const drawCircles = true;
 const drawRectangles = true;
@@ -56,6 +57,19 @@ window.onresize = function() {
 window.onkeydown = function(ev) {
     if (ev.key === "ArrowRight") playNextSound();
     if (ev.key === "ArrowLeft") playPrevSound();
+    if (ev.key === " ") togglePlay();
+}
+
+async function togglePlay() {
+    autoplay = true;
+    if (getAudioContext().state === 'running') {
+        await getAudioContext().suspend();
+    } else {
+        await getAudioContext().resume();
+        if (getAudioContext().state !== 'running') {
+            sound[currentSound].play();
+        }
+    }
 }
 
 function playNextSound() {
@@ -85,11 +99,17 @@ function playPrevSound() {
     fft.setInput(sound[currentSound]);
 }
 
+function showProgress(progress) {
+    console.log("sound loaded " + (progress * 100) + " %.");
+}
+
 function preload() {
     soundFormats('mp3', 'ogg');
     i = 0;
     sounds.forEach(soundName => {
-        sound[i] = loadSound("sounds/"+soundName);
+        sound[i] = loadSound("sounds/"+soundName, function() {}, function() {
+            text('Error loading audio.', 10, 50);
+        }, showProgress);
         sound[i].setVolume(volume);
         i++;
     });
@@ -101,7 +121,6 @@ function setup() {
     colorMode(HSL);
     strokeWeight(.5);
     stroke(0);
-    sound[currentSound].play();
     amplitude = new p5.Amplitude();
     amplitude.setInput(sound[currentSound]);
     fft = new p5.FFT();
@@ -109,6 +128,7 @@ function setup() {
     background(0, 1);
     savedMillis = millis();
     yRotation = 0;
+    getAudioContext().suspend();
 }
 
 function windowResized() {
@@ -128,7 +148,7 @@ function draw() {
     if (hueShift >= 360) hueShift -= 360;
 
     // audio
-    if (!sound[currentSound].isPlaying()) {
+    if (autoplay && !sound[currentSound].isPlaying()) {
         playNextSound();
     }
     let spectrum = fft.analyze();

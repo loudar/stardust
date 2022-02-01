@@ -1,4 +1,5 @@
 # How to run
+*Make sure you have python installed before you run the console command.*
 Console:
 ```
 python simpleHttpService.py

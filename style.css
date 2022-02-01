@@ -12,7 +12,7 @@
 body {
     margin: 0;
     background: black;
-    color: white;
+    color: var(--foreground);
     width: 100%;
     display: flex;
     position: relative;
@@ -33,6 +33,12 @@ body {
 .trackInfoContainer {
     position: relative;
     width: 100%;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.trackInfoContainer:hover {
+    opacity: 1;
 }
 
 .trackInfo * {
@@ -41,6 +47,34 @@ body {
 
 .trackTime {
     position: relative;
+}
+
+input[type="range"] {
+    background: none;
+    border: none;
+}
+
+input[type="range"]::-webkit-slider-thumb, input[type="range"]::-moz-range-thumb {
+    box-shadow: none;
+    border: none;
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    background: var(--foreground);
+    cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-runnable-track, input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 2px;
+    cursor: pointer;
+    background: var(--foreground);
+    border-radius: 4px;
+    border: none;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+    background: none;
 }
 
 .trackTitle {
@@ -62,7 +96,7 @@ body {
     padding: 1px;
 }
 
-.trackListToggle {
+.trackListToggle, .darkModeToggle {
     position: absolute;
     padding: 5px 10px;
     background: var(--background-hover);
@@ -72,8 +106,12 @@ body {
     transition: opacity .2s ease;
 }
 
-.trackListToggle:hover {
+.trackListToggle:hover, .darkModeToggle:hover {
     opacity: 1;
+}
+
+.darkModeToggle {
+    margin-left: 69px;
 }
 
 .trackListTrack {

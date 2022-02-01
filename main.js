@@ -60,6 +60,10 @@ window.onkeydown = function(ev) {
     if (ev.key === " ") togglePlay();
 }
 
+function updateTitle(trackName) {
+    document.querySelector("h1").innerHTML = trackName;
+}
+
 async function togglePlay() {
     autoplay = true;
     if (getAudioContext().state === 'running') {
@@ -80,10 +84,8 @@ function playNextSound() {
     while (!sound[currentSound].isPlaying()) {
         // wait
     }
-    amplitude = new p5.Amplitude();
-    amplitude.setInput(sound[currentSound]);
-    fft = new p5.FFT();
-    fft.setInput(sound[currentSound]);
+    getAnalyzers();
+    updateTitle(sounds[currentSound]);
 }
 
 function playPrevSound() {
@@ -93,6 +95,11 @@ function playPrevSound() {
     while (!sound[currentSound].isPlaying()) {
         // wait
     }
+    getAnalyzers();
+    updateTitle(sounds[currentSound]);
+}
+
+function getAnalyzers() {
     amplitude = new p5.Amplitude();
     amplitude.setInput(sound[currentSound]);
     fft = new p5.FFT();
@@ -100,14 +107,16 @@ function playPrevSound() {
 }
 
 function showProgress(progress) {
-    console.log("sound loaded " + (progress * 100) + " %.");
+    //console.log("sound loaded " + (progress * 100) + " %.");
 }
 
 function preload() {
     soundFormats('mp3', 'ogg');
     i = 0;
     sounds.forEach(soundName => {
-        sound[i] = loadSound("sounds/"+soundName, function() {}, function() {
+        sound[i] = loadSound("sounds/"+soundName, function() {
+            console.log("File "+soundName+" loaded.");
+        }, function() {
             text('Error loading audio.', 10, 50);
         }, showProgress);
         sound[i].setVolume(volume);
@@ -121,10 +130,8 @@ function setup() {
     colorMode(HSL);
     strokeWeight(.5);
     stroke(0);
-    amplitude = new p5.Amplitude();
-    amplitude.setInput(sound[currentSound]);
-    fft = new p5.FFT();
-    fft.setInput(sound[currentSound]);
+    getAnalyzers();
+    updateTitle(sounds[currentSound]);
     background(0, 1);
     savedMillis = millis();
     yRotation = 0;
@@ -208,7 +215,8 @@ function draw() {
         // range bars
         fill(0, 100, 100, 255);
         stroke(0, 100, 100, 0);
-        let freqOffset = -(freq.length / 2) * visWidth * 1.25;
+        let oddity = (freq.length % 2) * visWidth * 1.125;
+        let freqOffset = -((freq.length - 1) / 2) * visWidth * 1.25 - oddity;
         freq.forEach(range => {
             range /= 255;
             freqOffset += visWidth * 1.25;

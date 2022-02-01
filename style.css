@@ -16,6 +16,7 @@ body {
     width: 100%;
     display: flex;
     position: relative;
+    overflow: hidden;
 }
 
 #p5_loading {
@@ -23,12 +24,28 @@ body {
     padding: 5px 10px;
 }
 
-.trackTitle {
+.trackInfo {
     position: absolute;
-    font-size: 40px;
-    bottom: 0;
     width: 100%;
+    bottom: 0;
+}
+
+.trackInfoContainer {
+    position: relative;
+    width: 100%;
+}
+
+.trackInfo * {
     text-align: center;
+}
+
+.trackTime {
+    position: relative;
+}
+
+.trackTitle {
+    font-size: 40px;
+    margin-top: 10px;
 }
 
 .trackListContent {
@@ -51,6 +68,12 @@ body {
     background: var(--background-hover);
     border: 1px solid var(--foreground);
     cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.trackListToggle:hover {
+    opacity: 1;
 }
 
 .trackListTrack {

@@ -411,7 +411,7 @@ function draw() {
         translate(rectEl.x, rectEl.y, rectEl.z);
         fill(hue, saturation, brightness, opacity * (brightness / 50) * (saturation * 100));
         stroke(hue, specificSat, specificBright, (1 - opacity) * speedFactor);
-        if (rectEl.s > 30 - (20 * avg[0]) || rectEl.s < 6 + (10 * avg[1])) box(rectEl.s);
+        if (rectEl.s < 16 + (20 * avg[0]) && rectEl.s > 16 - (10 * avg[1])) box(rectEl.s);
         translate(-rectEl.x, -rectEl.y, -rectEl.z);
 
         let bounds = random(.001, .005);

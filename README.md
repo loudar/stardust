@@ -16,8 +16,11 @@ Access `localhost:8080` in your browser.
 # Keyboard shortcuts
 
 **Play/Pause** - `Space`
+
 **Next track** - `Right arrow`
+
 **Previous track** - `Left arrow`
+
 **Toggle track list** - `T`
 
 # Important

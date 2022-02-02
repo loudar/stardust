@@ -1,9 +1,16 @@
 # How to run
-*Make sure you have python installed before you run the console command.*
-Console:
+*Make sure you have node installed before you run the server.*
+
+Install node packages:
 ```
-python simpleHttpService.py
+npm install
 ```
+
+Run server:
+```
+node server.js
+```
+
 Access `localhost:8080` in your browser.
 
 # Important

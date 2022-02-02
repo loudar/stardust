@@ -1,5 +1,4 @@
 let i;
-
 let loading = true;
 let CSScolorMode = 0;
 const modeColors = [
@@ -55,8 +54,8 @@ let hueShift = Math.random() * 360;
 let hueArea = 90;
 let hueV = 0;
 let hueLimit = 360;
-let width = window.innerWidth;
-let height = window.innerHeight;
+let width;
+let height;
 let catchRadius = 100;
 const bpm = 126;
 const bps = bpm / 60;
@@ -161,7 +160,7 @@ function jumpToTime(newTime, duration) {
     if (!sound.isPlaying()) {
         sound.play(newTime);
         while (!sound.isPlaying()) {}
-        updateCurrentTime(newTime);
+        updateCurrentTime();
         return;
     }
     try {
@@ -169,11 +168,12 @@ function jumpToTime(newTime, duration) {
     } catch(e) {
         console.log(e);
     }
-    updateCurrentTime(newTime);
+    updateCurrentTime();
 }
 
-function updateCurrentTime(currentTime) {
+function updateCurrentTime() {
     let currentTimeEl = document.querySelector("#currentTime");
+    let currentTime = sound.currentTime();
     let currentTimeStr = new Date(1000 * currentTime).toISOString().substr(11, 8);
     currentTimeEl.innerHTML = currentTimeStr;
     let scrubTimeEl = document.querySelector("#currentTimeScrub");
@@ -265,7 +265,13 @@ function preload() {
 }
 
 function setup() {
-    if (setupRan) return;
+    width = window.innerWidth;
+    height = window.innerHeight;
+    createCanvas(width, height - 4, WEBGL);
+    if (setupRan) {
+        throw new DOMException("setup() shouldn't run more than once, but we do it anyway because of the way we load models ;)");
+        return;
+    }
     setupRan = true;
 
     sounds = Object.values(sounds);
@@ -285,7 +291,6 @@ function setup() {
         customModel = loadModel('models/'+models[0], true);
     }
 
-    createCanvas(width, height - 4, WEBGL);
     cameraDist = height / 2;
     camera(0, 0, cameraDist);
     colorMode(HSL);
@@ -332,7 +337,7 @@ function draw() {
         playNextSound(sounds);
     }
     if (sound.isPlaying() && millis() % 100) {
-        updateCurrentTime(sound.currentTime());
+        updateCurrentTime();
     }
     let spectrum = fft.analyze();
     let freq = getFrequencyRanges(fft);
@@ -480,10 +485,10 @@ function draw() {
         // draw
         translate(rectEl.x, rectEl.y, rectEl.z);
         if (CSScolorMode !== 1) {
-            fill(hue, saturation, brightness, opacity * (brightness / 50) * (saturation * 100));
+            fill(hue, saturation, brightness, opacity * (brightness / 50) * (saturation / 100));
             stroke(hue, specificSat, specificBright, (1 - opacity) * speedFactor);
         } else {
-            fill(hue, saturation, 100 - brightness, opacity * (brightness / 50) * (saturation * 100));
+            fill(hue, saturation, 100 - brightness, opacity * (brightness / 50) * (saturation / 100));
             stroke(hue, specificSat, 100 - specificBright, (1 - opacity) * speedFactor);
         }
         if (rectEl.s < 16 + (20 * avg[0]) && rectEl.s > 16 - (10 * avg[1])) box(rectEl.s);

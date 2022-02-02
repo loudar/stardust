@@ -4,31 +4,31 @@ Use this for anything you want :D
  */
 
 // evade mouse (2D)
-if (circleEl.x > mouseX - catchRadius && circleEl.x < mouseX + catchRadius && circleEl.y > mouseY - catchRadius
-    && circleEl.y < mouseY + catchRadius && !circleEl.lockV) {
-    let distNow = sqrt(pow((mouseX - circleEl.x), 2) + pow((mouseY - circleEl.y), 2));
-    let distThen = sqrt(pow((mouseX - (circleEl.x + circleEl.vx)), 2) + pow((mouseY - (circleEl.y + circleEl.vy)), 2));
-    if (distThen < distNow) {
-        circleEl.vx *= -5;
-        circleEl.vy *= -5;
-    } else {
-        circleEl.vx *= -5;
-        circleEl.vy *= 5;
-    }
-    circleEl.lockV = true;
-} else if (!(circleEl.x > mouseX - catchRadius && circleEl.x < mouseX + catchRadius && circleEl.y > mouseY - catchRadius
-    && circleEl.y < mouseY + catchRadius) && circleEl.lockV) {
-    circleEl.vx *= .8;
-    circleEl.vy *= .8;
-    circleEl.lockV = false;
-}
+// if (circleEl.x > mouseX - catchRadius && circleEl.x < mouseX + catchRadius && circleEl.y > mouseY - catchRadius
+//     && circleEl.y < mouseY + catchRadius && !circleEl.lockV) {
+//     let distNow = sqrt(pow((mouseX - circleEl.x), 2) + pow((mouseY - circleEl.y), 2));
+//     let distThen = sqrt(pow((mouseX - (circleEl.x + circleEl.vx)), 2) + pow((mouseY - (circleEl.y + circleEl.vy)), 2));
+//     if (distThen < distNow) {
+//         circleEl.vx *= -5;
+//         circleEl.vy *= -5;
+//     } else {
+//         circleEl.vx *= -5;
+//         circleEl.vy *= 5;
+//     }
+//     circleEl.lockV = true;
+// } else if (!(circleEl.x > mouseX - catchRadius && circleEl.x < mouseX + catchRadius && circleEl.y > mouseY - catchRadius
+//     && circleEl.y < mouseY + catchRadius) && circleEl.lockV) {
+//     circleEl.vx *= .8;
+//     circleEl.vy *= .8;
+//     circleEl.lockV = false;
+// }
 
 // sphere
-translate(circleEl.x, circleEl.y, 0);
-stroke(hue, saturation, brightness, opacity);
-fill(0, 0);
-sphere(circleEl.size / 2, 4, 4);
-translate(-circleEl.x, -circleEl.y, 0);
+// translate(circleEl.x, circleEl.y, 0);
+// stroke(hue, saturation, brightness, opacity);
+// fill(0, 0);
+// sphere(circleEl.size / 2, 4, 4);
+// translate(-circleEl.x, -circleEl.y, 0);
 
 // mouse
 /*strokeWeight(0);

@@ -65,7 +65,7 @@ let autoplay = false;
 let sound, amplitude, fft;
 let bass, lowMid, mid, highMid, treble;
 const showSpectrum = true;
-const showModel = true;
+const showModel = false;
 const adjustSpectrumToBase = false;
 let savedMillis, yRotation;
 let waitForNextPeak = false;

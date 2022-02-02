@@ -1,4 +1,7 @@
 let i;
+const showSpectrum = true;
+const showModel = false;
+const adjustSpectrumToBase = false;
 let loading = true;
 let CSScolorMode = 0;
 const modeColors = [
@@ -31,6 +34,20 @@ darkModeToggle.onclick = function() {
     darkModeToggle.innerHTML = buttonText;
     changeColors();
 }
+
+let useMic = false;
+let micToggle = document.querySelector(".micToggle");
+micToggle.onclick = function() {
+    useMic = !useMic;
+    let buttonText;
+    if (useMic) {
+        buttonText = "Disable mic";
+    } else {
+        buttonText = "Enable mic";
+    }
+    micToggle.innerHTML = buttonText;
+    getAnalyzers();
+}
 const drawCircles = true;
 const drawRectangles = true;
 const drawLines = true;
@@ -62,11 +79,8 @@ const bps = bpm / 60;
 const spb = (1 / bps);
 let autoplay = false;
 
-let sound, amplitude, fft;
+let sound, mic, amplitude, fft;
 let bass, lowMid, mid, highMid, treble;
-const showSpectrum = true;
-const showModel = true;
-const adjustSpectrumToBase = false;
 let savedMillis, yRotation;
 let waitForNextPeak = false;
 let audioPlayed = false;
@@ -80,7 +94,7 @@ let specificSat, specificBright;
 let cameraDist;
 
 let currentSound = 0;
-const volume = 1;
+let volume = 1;
 
 let mouseDown = 0;
 document.body.onmousedown = function() {
@@ -106,6 +120,7 @@ function changeColors() {
 }
 
 async function togglePlay() {
+    if (useMic) sound.stop();
     if (getAudioContext().state === 'running') {
         await getAudioContext().suspend();
     } else {
@@ -114,7 +129,7 @@ async function togglePlay() {
 }
 
 async function startPlay() {
-    if (!sound.isPlaying()) {
+    if (!sound.isPlaying() && !useMic) {
         sound.play();
     }
     if (getAudioContext().state !== 'running') {
@@ -136,7 +151,9 @@ function playNewSound(sounds) {
         if (getAudioContext().state !== 'running') getAudioContext().resume();
         document.title = sounds[currentSound];
         if (!autoplay) autoplay = true;
-        sound.play(0);
+        if (!useMic) {
+            sound.play(0);
+        }
         while (!sound.isPlaying()) {}
         getAnalyzers();
         updateTitle(sounds[currentSound]);
@@ -171,7 +188,7 @@ function scrubTime(el) {
 
 function jumpToTime(newTime, duration) {
     getAudioContext().resume();
-    if (!sound.isPlaying()) {
+    if (!sound.isPlaying() && !useMic) {
         sound.play(newTime);
         while (!sound.isPlaying()) {}
         updateCurrentTime();
@@ -258,14 +275,24 @@ function playPrevSound(sounds) {
 
 function getAnalyzers() {
     amplitude = new p5.Amplitude();
-    amplitude.setInput(sound);
     fft = new p5.FFT();
-    fft.setInput(sound);
+
+    if (useMic) {
+        amplitude.setInput(mic);
+        fft.setInput(mic);
+    } else {
+        amplitude.setInput(sound);
+        fft.setInput(sound);
+    }
 }
 
 function showProgress(value) {
     let progress = document.querySelector("progress");
-    progress.value = value;
+    try {
+        progress.value = value;
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 let sounds, models;
@@ -274,9 +301,7 @@ let setupRan = false;
 
 function preload() {
     sounds = loadJSON("/sounds");
-    if (showModel) {
-        models = loadJSON("/models");
-    }
+    models = loadJSON("/models");
 }
 
 function setup() {
@@ -293,6 +318,14 @@ function setup() {
     createTracklist(sounds);
 
     soundFormats('mp3', 'ogg');
+    getAudioContext().suspend();
+
+    // Create an Audio input
+    mic = new p5.AudioIn();
+
+    // start the Audio Input.
+    // By default, it does not .connect() (to the computer speakers)
+    mic.start();
 
     // load sound
     let progress = document.querySelector("progress");
@@ -318,7 +351,6 @@ function setup() {
     background(0, 1);
     savedMillis = millis();
     yRotation = 0;
-    getAudioContext().suspend();
     loading = false;
 }
 
@@ -331,11 +363,16 @@ function windowResized() {
 
 function getFrequencyRanges(fft) {
     let freq = [];
-    freq[0] = fft.getEnergy("bass");
-    freq[1] = fft.getEnergy("lowMid");
-    freq[2] = fft.getEnergy("mid");
-    freq[3] = fft.getEnergy("highMid");
-    freq[4] = fft.getEnergy("treble");
+    if (useMic) {
+        volume = 1.8;
+    } else {
+        volume = 1;
+    }
+    freq[0] = min(255, volume * fft.getEnergy("bass"));
+    freq[1] = min(255, volume * fft.getEnergy("lowMid"));
+    freq[2] = min(255, volume * fft.getEnergy("mid"));
+    freq[3] = min(255, volume * fft.getEnergy("highMid"));
+    freq[4] = min(255, volume * fft.getEnergy("treble"));
     return freq;
 }
 

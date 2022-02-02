@@ -91,7 +91,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     position: absolute;
     top: 30px;
     left: 0;
-    max-height: calc(100% - 4px);
+    max-height: 50%;
     width: max-content;
     font-family: 'Courier New', monospace;
     display: flex;
@@ -101,8 +101,13 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     padding: 1px;
 }
 
-.trackListToggle, .darkModeToggle {
+.toggles {
     position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.toggles * {
     padding: 5px 10px;
     background: var(--background-hover);
     border: 1px solid var(--foreground);
@@ -111,12 +116,8 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     transition: opacity .2s ease;
 }
 
-.trackListToggle:hover, .darkModeToggle:hover {
+.toggles *:hover {
     opacity: 1;
-}
-
-.darkModeToggle {
-    margin-left: 69px;
 }
 
 .trackListTrack {

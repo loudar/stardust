@@ -82,6 +82,14 @@ let cameraDist;
 let currentSound = 0;
 const volume = 1;
 
+let mouseDown = 0;
+document.body.onmousedown = function() {
+    ++mouseDown;
+}
+document.body.onmouseup = function() {
+    --mouseDown;
+}
+
 window.onresize = function() {
     windowResized();
 }
@@ -106,12 +114,18 @@ async function togglePlay() {
 }
 
 async function startPlay() {
-    await getAudioContext().resume();
-    if (getAudioContext().state !== 'running' || !audioPlayed) {
-        sound.play(0);
-        while (!sound.isPlaying()) {}
+    if (!sound.isPlaying()) {
+        sound.play();
     }
-    audioPlayed = true;
+    if (getAudioContext().state !== 'running') {
+        await getAudioContext().resume();
+        return;
+    }
+    // if (!audioPlayed) {
+    //     sound.play();
+    //     while (!sound.isPlaying()) {}
+    // }
+    // audioPlayed = true;
 }
 
 function playNewSound(sounds) {
@@ -172,6 +186,7 @@ function jumpToTime(newTime, duration) {
 }
 
 function updateCurrentTime() {
+    if (mouseDown) return;
     let currentTimeEl = document.querySelector("#currentTime");
     let currentTime = sound.currentTime();
     let currentTimeStr = new Date(1000 * currentTime).toISOString().substr(11, 8);
@@ -374,7 +389,7 @@ function draw() {
     camera(0, 0, cameraDist + (speedFactor * height * .001));
 
     let millisDif = millis() - savedMillis;
-    yRotation = (yRotation + (millisDif / 400) + speed * .2 + avg[0] + .5) % 360;
+    yRotation = (yRotation + ((millisDif / 400) + speed * .2 + avg[0] + .5) * .35) % 360;
     angleMode(DEGREES);
     rotateY(yRotation);
     savedMillis = millis();

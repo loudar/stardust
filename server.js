@@ -1,4 +1,5 @@
 const express = require('express')
+const colors = require('colors/safe');
 const app = express()
 const port = 3000
 
@@ -17,22 +18,39 @@ async function getFiles(dir) {
     return files.reduce((a, f) => a.concat(f), []);
 }
 
+async function getFilesOfType(dir, filetype) {
+    let fileArray = await getFiles(__dirname + "/" + dir);
+    fileArray = fileArray.map(file => file.substr((__dirname + "/" + dir + "/").length));
+    let files = [];
+    for(file of fileArray) {
+        if (file.substr(-filetype.length, filetype.length) === filetype) {
+            files.push(file);
+        }
+    }
+    return files;
+}
+
 async function startup(){
-    let fileArray = await getFiles(__dirname + "/sounds");
-    fileArray = fileArray.map(file => file.substr((__dirname + "/sounds/").length));
+    let audioFiles = await getFilesOfType("sounds", "mp3");
+    let modelFiles = await getFilesOfType("models", "obj");
 
     app.use("/sounds", express.static('sounds/*'));
+    app.use("/models", express.static('models/*'));
     app.use(express.static('.'));
 
     app.get("/sounds", (req, res) => {
-        res.send(JSON.stringify(fileArray));
+        res.send(JSON.stringify(audioFiles));
+        console.log("Sent a list of "+audioFiles.length+" audio files.");
+    });
+    app.get("/models", (req, res) => {
+        res.send(JSON.stringify(modelFiles));
+        console.log("Sent a list of "+modelFiles.length+" model files.");
     });
 
     app.listen(port, () => {
-        console.log(`Example app listening on port ${port}`)
+        let text = "Listening on port ";
+        console.log(text + colors.yellow(port.toString()));
     });
 }
 
 startup();
-
-

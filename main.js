@@ -66,6 +66,7 @@ let autoplay = false;
 let sound, amplitude, fft;
 let bass, lowMid, mid, highMid, treble;
 const showSpectrum = true;
+const showModel = true;
 const adjustSpectrumToBase = false;
 let savedMillis, yRotation;
 let waitForNextPeak = false;
@@ -115,6 +116,7 @@ async function startPlay() {
 }
 
 function playNewSound(sounds) {
+    windowResized();
     loading = true;
     sound.stop();
     sound.setPath("sounds/"+sounds[currentSound], function() {
@@ -127,8 +129,19 @@ function playNewSound(sounds) {
         updateTitle(sounds[currentSound]);
         updateTracklist();
         updateDuration(sound.duration());
+        updateModel(sounds[currentSound]);
         loading = false;
     });
+}
+
+function updateModel(trackName) {
+    if (!showModel) return;
+    for(const modelName of models) {
+        let modelN = modelName.substr(0, modelName.indexOf("."));
+        if (trackName.toLowerCase().includes(modelN.toLowerCase())) {
+            customModel = loadModel('models/' + modelName, true);
+        }
+    }
 }
 
 function updateDuration(duration) {
@@ -170,7 +183,10 @@ function updateCurrentTime(currentTime) {
 window.onkeydown = function(ev) {
     if (ev.key === "ArrowRight" && !loading) playNextSound(sounds);
     if (ev.key === "ArrowLeft" && !loading) playPrevSound(sounds);
-    if (ev.key === " " && !loading) togglePlay();
+    if (ev.key === " " && !loading) {
+        ev.preventDefault();
+        togglePlay();
+    }
     if (ev.key === "t") toggleTrackList();
 }
 
@@ -237,25 +253,40 @@ function showProgress(value) {
     progress.value = value;
 }
 
-let sounds;
+let sounds, models;
+let customModel;
+let setupRan = false;
 
 function preload() {
     sounds = loadJSON("/sounds");
+    if (showModel) {
+        models = loadJSON("/models");
+    }
 }
 
 function setup() {
+    if (setupRan) return;
+    setupRan = true;
+
     sounds = Object.values(sounds);
     createTracklist(sounds);
 
     soundFormats('mp3', 'ogg');
 
+    // load sound
     let progress = document.querySelector("progress");
     progress.style.opacity = "1";
     sound = loadSound("sounds/"+sounds[0], function() {}, function() {}, showProgress);
     progress.style.opacity = "0";
 
+    // load model
+    models = Object.values(models);
+    if (showModel) {
+        customModel = loadModel('models/'+models[0], true);
+    }
+
     createCanvas(width, height - 4, WEBGL);
-    cameraDist = width / 2;
+    cameraDist = height / 2;
     camera(0, 0, cameraDist);
     colorMode(HSL);
     strokeWeight(.5);
@@ -275,7 +306,7 @@ function windowResized() {
     width = window.innerWidth;
     height = window.innerHeight;
     resizeCanvas(width, height - 4);
-    cameraDist = (width / 2);
+    cameraDist = (height / 2);
 }
 
 function getFrequencyRanges(fft) {
@@ -338,46 +369,10 @@ function draw() {
     camera(0, 0, cameraDist + (speedFactor * height * .001));
 
     let millisDif = millis() - savedMillis;
-    yRotation = yRotation + (millisDif / 400) + speed * .4;
+    yRotation = (yRotation + (millisDif / 400) + speed * .2 + avg[0] + .5) % 360;
     angleMode(DEGREES);
     rotateY(yRotation);
     savedMillis = millis();
-
-    /* Frequency bars */
-    if (showSpectrum) {0
-        let visWidth = 20 * (width / 2000);
-        let visHeight = height / 4;
-
-        // range bars
-        strokeWeight(1.5);
-        if (CSScolorMode !== 1) {
-            fill(0);
-            stroke(0, 0, 100, 255);
-        } else {
-            fill(240);
-            stroke(0, 0, 0, 255);
-        }
-        let oddity = (freq.length % 2) * visWidth * 1.125;
-        let freqOffset = -((freq.length - 1) / 2) * visWidth * 1.25 - oddity;
-        i = freq.length - 1;
-        freq.forEach(range => {
-            range /= 255;
-            freqOffset += visWidth * 1.25;
-            let x = freqOffset;
-            let h = visHeight * pow(range, 1 + (i * 1.5));
-            let y;
-            if (adjustSpectrumToBase) {
-                y = -h / 2;
-            } else {
-                y = 0;
-            }
-            translate(x, y, 0);
-            box(visWidth, h, visWidth);
-            translate(-x, -y, 0);
-            i--;
-        });
-        strokeWeight(.5);
-    }
 
     if (!wave.active && random(0, 1) > 1 - (1 / 1000)) {
         wave.active = true;
@@ -522,9 +517,9 @@ function draw() {
         if (CSScolorMode !== 1) {
             stroke(hue, specificSat, specificBright, opacity * speedFactor);
         } else {
-            stroke(hue, specificSat, 100 - specificBright, opacity * speedFactor);
+            stroke(hue, specificSat, 100 - specificBright, opacity * speedFactor * specificBright);
         }
-        fill(0, 0);
+        noFill();
         circle(0, 0, circleEl.size);
         translate(-circleEl.x, -circleEl.y, -circleEl.z);
         let bounds = random(.001, .1);
@@ -536,6 +531,57 @@ function draw() {
         circleEl.z += circleEl.vz * speedFactor;
         circleEl.size += random(-bounds / 5, bounds / 5);
     });
+
+    /* Frequency bars */
+    if (showSpectrum && !showModel) {0
+        let visWidth = 20 * (width / 2000);
+        let visHeight = height / 4;
+
+        // range bars
+        strokeWeight(1.5);
+        if (CSScolorMode !== 1) {
+            fill(0);
+            stroke(0, 0, 100, 255);
+        } else {
+            fill(240);
+            stroke(0, 0, 0, 255);
+        }
+        let oddity = (freq.length % 2) * visWidth * 1.125;
+        let freqOffset = -((freq.length - 1) / 2) * visWidth * 1.25 - oddity;
+        i = freq.length - 1;
+        freq.forEach(range => {
+            range /= 255;
+            freqOffset += visWidth * 1.25;
+            let x = freqOffset;
+            let h = visHeight * pow(range, 1 + (i * 1.5));
+            let y;
+            if (adjustSpectrumToBase) {
+                y = -h / 2;
+            } else {
+                y = 0;
+            }
+            translate(x, y, 0);
+            box(visWidth, h, visWidth);
+            translate(-x, -y, 0);
+            i--;
+        });
+        strokeWeight(.5);
+    }
+    if (showModel) {
+        let upscale = 1 + (avg[0] * .3);
+        let rotateVector = createVector(0, 2, 0);
+        let rotation = 2 * yRotation;
+
+        scale(upscale);
+        rotateY(-rotation, rotateVector);
+        rotateX(180);
+        strokeWeight(.5);
+        fill(hueShift, 100, 50, .2);
+        stroke(hueShift, 100, 50, 255);
+        model(customModel);
+        rotateX(-180);
+        rotateY(rotation, rotateVector);
+    }
 
     function getWaveStates(x, saturation, brightness, opacity, hue) {
         let specificSat, specificBright;

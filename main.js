@@ -1,9 +1,4 @@
-const sounds = [
-    "example sound 1",
-    "example sound 2",
-];
 let i;
-createTracklist(sounds);
 
 let loading = true;
 let CSScolorMode = 0;
@@ -119,7 +114,7 @@ async function startPlay() {
     audioPlayed = true;
 }
 
-function playNewSound() {
+function playNewSound(sounds) {
     loading = true;
     sound.stop();
     sound.setPath("sounds/"+sounds[currentSound], function() {
@@ -173,9 +168,9 @@ function updateCurrentTime(currentTime) {
 }
 
 window.onkeydown = function(ev) {
-    if (ev.key === "ArrowRight") playNextSound();
-    if (ev.key === "ArrowLeft") playPrevSound();
-    if (ev.key === " ") togglePlay();
+    if (ev.key === "ArrowRight" && !loading) playNextSound(sounds);
+    if (ev.key === "ArrowLeft" && !loading) playPrevSound(sounds);
+    if (ev.key === " " && !loading) togglePlay();
     if (ev.key === "t") toggleTrackList();
 }
 
@@ -186,17 +181,17 @@ function updateTitle(trackName) {
 function createTracklist(sounds) {
     let tracklist = document.querySelector(".trackListContent");
     i = 0;
-    sounds.forEach(soundName => {
+    for(const soundName of sounds){
         let soundEl = document.createElement("div");
         soundEl.classList.add("trackListTrack");
         soundEl.id = i;
         soundEl.innerHTML = soundName;
         soundEl.onclick = function() {
-            playTrack(soundEl);
+            playTrack(sounds, soundEl);
         };
         tracklist.appendChild(soundEl);
         i++;
-    });
+    }
 }
 
 function updateTracklist() {
@@ -210,24 +205,24 @@ function updateTracklist() {
     });
 }
 
-function playTrack(el) {
+function playTrack(sounds, el) {
     let listIndex = parseInt(el.id);
     currentSound = max(0, min(sounds.length, listIndex));
     if (sounds[currentSound]) {
-        playNewSound();
+        playNewSound(sounds);
     }
 }
 
-function playNextSound() {
+function playNextSound(sounds) {
     currentSound++;
     if (currentSound > sounds.length - 1) currentSound = 0;
-    playNewSound();
+    playNewSound(sounds);
 }
 
-function playPrevSound() {
+function playPrevSound(sounds) {
     currentSound = currentSound - 1;
     if (currentSound < 0) currentSound = sounds.length;
-    playNewSound();
+    playNewSound(sounds);
 }
 
 function getAnalyzers() {
@@ -242,15 +237,23 @@ function showProgress(value) {
     progress.value = value;
 }
 
-async function preload() {
+let sounds;
+
+function preload() {
+    sounds = loadJSON("/sounds");
+}
+
+function setup() {
+    sounds = Object.values(sounds);
+    createTracklist(sounds);
+
     soundFormats('mp3', 'ogg');
+
     let progress = document.querySelector("progress");
     progress.style.opacity = "1";
     sound = loadSound("sounds/"+sounds[0], function() {}, function() {}, showProgress);
     progress.style.opacity = "0";
-}
 
-function setup() {
     createCanvas(width, height - 4, WEBGL);
     cameraDist = width / 2;
     camera(0, 0, cameraDist);
@@ -295,9 +298,9 @@ function draw() {
 
     // audio
     if (!loading && sound.currentTime() >= sound.duration() - 0.01 && !sound.isPlaying() && getAudioContext().state === 'running') {
-        playNextSound();
+        playNextSound(sounds);
     }
-    if (sound.isPlaying()) {
+    if (sound.isPlaying() && millis() % 100) {
         updateCurrentTime(sound.currentTime());
     }
     let spectrum = fft.analyze();

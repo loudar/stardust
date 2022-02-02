@@ -1,1 +1,4 @@
 /.idea
+/sounds/*
+/node_modules
+/models/*

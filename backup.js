@@ -1,3 +1,8 @@
+/*
+This file contains code that was used in older versions of the program, but was not worth to be deleted entirely.
+Use this for anything you want :D
+ */
+
 // evade mouse (2D)
 if (circleEl.x > mouseX - catchRadius && circleEl.x < mouseX + catchRadius && circleEl.y > mouseY - catchRadius
     && circleEl.y < mouseY + catchRadius && !circleEl.lockV) {

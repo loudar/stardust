@@ -11,7 +11,7 @@ Run server:
 node server.js
 ```
 
-Access `localhost:8080` in your browser.
+Access `localhost:3000` in your browser.
 
 # Keyboard shortcuts
 

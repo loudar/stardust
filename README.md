@@ -1,5 +1,5 @@
 # How to run
-*Make sure you have node installed before you run the server.*
+*Make sure you have node installed on your system before you run the server.*
 
 Install node packages:
 ```

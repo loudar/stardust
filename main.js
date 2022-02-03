@@ -34,6 +34,13 @@ darkModeToggle.onclick = function() {
     changeColors();
 }
 
+let userVolume = 1;
+let volumeSlider = document.querySelector("#volumeSlider");
+volumeSlider.onchange = function() {
+    userVolume = volumeSlider.value / 100;
+    sound.setVolume(pow(userVolume, 2));
+}
+
 let useMic = false;
 let micToggle = document.querySelector(".micToggle");
 micToggle.onclick = function() {
@@ -294,14 +301,14 @@ function playPrevSound(sounds) {
 }
 
 function getAnalyzers() {
-    amplitude = new p5.Amplitude();
-    fft = new p5.FFT();
+    // amplitude = new p5.Amplitude();
+    fft = new p5.FFT(.5);
 
     if (useMic) {
-        amplitude.setInput(mic);
+        // amplitude.setInput(mic);
         fft.setInput(mic);
     } else {
-        amplitude.setInput(sound);
+        // amplitude.setInput(sound);
         fft.setInput(sound);
     }
 }
@@ -388,11 +395,12 @@ function getFrequencyRanges(fft) {
     } else {
         volume = 1;
     }
-    freq[0] = min(255, volume * fft.getEnergy("bass"));
-    freq[1] = min(255, volume * fft.getEnergy("lowMid"));
-    freq[2] = min(255, volume * fft.getEnergy("mid"));
-    freq[3] = min(255, volume * fft.getEnergy("highMid"));
-    freq[4] = min(255, volume * fft.getEnergy("treble"));
+    let finalVolume = volume * (1 / userVolume);
+    freq[0] = min(255, finalVolume * fft.getEnergy("bass"));
+    freq[1] = min(255, finalVolume * fft.getEnergy("lowMid"));
+    freq[2] = min(255, finalVolume * fft.getEnergy("mid"));
+    freq[3] = min(255, finalVolume * fft.getEnergy("highMid"));
+    freq[4] = min(255, finalVolume * fft.getEnergy("treble"));
     return freq;
 }
 

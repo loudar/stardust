@@ -3,3 +3,5 @@
 /node_modules
 /releases
 /meta
+/models/*
+!/models/p5vis.obj

@@ -1,7 +1,6 @@
 let i;
 const showSpectrum = true;
-const showModel = false;
-const adjustSpectrumToBase = false;
+let adjustSpectrumToBase = false;
 let loading = true;
 let CSScolorMode = 0;
 const modeColors = [
@@ -47,6 +46,19 @@ micToggle.onclick = function() {
     }
     micToggle.innerHTML = buttonText;
     getAnalyzers();
+}
+
+let showModel = true;
+let modelToggle = document.querySelector(".modelToggle");
+modelToggle.onclick = function() {
+    showModel = !showModel;
+    let buttonText;
+    if (showModel) {
+        buttonText = "Disable model";
+    } else {
+        buttonText = "Enable model";
+    }
+    modelToggle.innerHTML = buttonText;
 }
 const drawCircles = true;
 const drawRectangles = true;
@@ -158,7 +170,7 @@ function playNewSound(sounds) {
         getAnalyzers();
         updateTitle(sounds[currentSound]);
         updateTracklist();
-        updateDuration(sound.duration());
+        updateDuration();
         updateModel(sounds[currentSound]);
         loading = false;
     });
@@ -166,15 +178,22 @@ function playNewSound(sounds) {
 
 function updateModel(trackName) {
     if (!showModel) return;
+    let modelFound = false;
     for(const modelName of models) {
         let modelN = modelName.substr(0, modelName.indexOf("."));
         if (trackName.toLowerCase().includes(modelN.toLowerCase())) {
             customModel = loadModel('models/' + modelName, true);
+            modelFound = true;
+            //break;
         }
+    }
+    if (!modelFound) {
+        customModel = loadModel('models/p5vis.obj', true);
     }
 }
 
-function updateDuration(duration) {
+function updateDuration() {
+    let duration = sound.duration();
     let durationEl = document.querySelector("#duration");
     let durationStr = new Date(1000 * duration).toISOString().substr(11, 8);
     durationEl.innerHTML = durationStr;
@@ -210,6 +229,7 @@ function updateCurrentTime() {
     currentTimeEl.innerHTML = currentTimeStr;
     let scrubTimeEl = document.querySelector("#currentTimeScrub");
     scrubTimeEl.value = 100 * currentTime / sound.duration();
+    updateDuration();
 }
 
 window.onkeydown = function(ev) {
@@ -336,7 +356,7 @@ function setup() {
     // load model
     models = Object.values(models);
     if (showModel) {
-        customModel = loadModel('models/'+models[0], true);
+        customModel = loadModel('models/p5vis.obj', true);
     }
 
     cameraDist = height / 2;
@@ -347,7 +367,7 @@ function setup() {
     getAnalyzers();
     updateTitle(sounds[currentSound]);
     updateTracklist();
-    updateDuration(sound.duration());
+    updateDuration();
     background(0, 1);
     savedMillis = millis();
     yRotation = 0;
@@ -399,8 +419,10 @@ function draw() {
     ];
 
     let treshhold = [];
-    treshhold[0] = .7;
-    treshhold[1] = .7;
+    // treshhold[0] = .7;
+    // treshhold[1] = .7;
+    treshhold[0] = .3;
+    treshhold[1] = .3;
     if (avg[0] < treshhold[0]) { avg[0] = 0 } else { avg[0] = pow((avg[0] - treshhold[0]) / (1 - treshhold[0]), 1.5) }
     if (avg[1] < treshhold[1]) { avg[1] = 0 } else { avg[1] = pow((avg[1] - treshhold[1]) / (1 - treshhold[1]), 4) }
     let speed = min(1, (avg[0] + avg[1]) * .5);
@@ -489,13 +511,13 @@ function draw() {
         hue = satResults.hue;
 
         // draw
-        opacity = opacity * speedFactor * random(0.5, 1);
+        opacity = opacity * speedFactor * random(0.5, 1.5);
         if (CSScolorMode !== 1) {
-            stroke(hue, specificSat, specificBright, opacity);
+            stroke(hue, specificSat, specificBright, opacity * avg[0]);
         } else {
-            stroke(hue, specificSat, 100 - specificBright, opacity);
+            stroke(hue, specificSat, 100 - specificBright, opacity * avg[0]);
         }
-        if (opacity > .8 && avg[0] > .1) {
+        if ((opacity > .8 && avg[0] > .5) || random(0, 1) > .999) {
             line(lineEl.x, lineEl.y, lineEl.z, lineEl.x2, lineEl.y2, lineEl.z2);
         }
 
@@ -524,27 +546,29 @@ function draw() {
     i = 0;
     rects.forEach(rectEl => {
         i++;
-        let opacity = i / rects.length;
-        let hue = (opacity * hueArea) + hueShift;
-        while (hue > 360) hue -= 360;
-        opacity = max(0, opacity - random(0, 0.1));
-        let satResults = getWaveStates(rectEl.x, saturation, brightness, opacity, hue);
-        let specificSat = satResults.specificSat;
-        let specificBright = satResults.specificBright;
-        opacity = satResults.opacity;
-        hue = satResults.hue;
+        if (rectEl.s < 16 + (20 * avg[0]) && rectEl.s > 16 - (10 * avg[1])) {
+            let opacity = i / rects.length;
+            let hue = (opacity * hueArea) + hueShift;
+            while (hue > 360) hue -= 360;
+            opacity = max(0, opacity - random(0, 0.1));
+            let satResults = getWaveStates(rectEl.x, saturation, brightness, opacity, hue);
+            let specificSat = satResults.specificSat;
+            let specificBright = satResults.specificBright;
+            opacity = satResults.opacity;
+            hue = satResults.hue;
 
-        // draw
-        translate(rectEl.x, rectEl.y, rectEl.z);
-        if (CSScolorMode !== 1) {
-            fill(hue, saturation, brightness, opacity * (brightness / 50) * (saturation / 100));
-            stroke(hue, specificSat, specificBright, (1 - opacity) * speedFactor);
-        } else {
-            fill(hue, saturation, 100 - brightness, opacity * (brightness / 50) * (saturation / 100));
-            stroke(hue, specificSat, 100 - specificBright, (1 - opacity) * speedFactor);
+            // draw
+            translate(rectEl.x, rectEl.y, rectEl.z);
+            if (CSScolorMode !== 1) {
+                fill(hue, saturation, brightness, opacity * (brightness / 50) * (saturation / 100));
+                stroke(hue, specificSat, specificBright, (1 - opacity) * speedFactor);
+            } else {
+                fill(hue, saturation, 100 - brightness, opacity * (brightness / 50) * (saturation / 100));
+                stroke(hue, specificSat, 100 - specificBright, (1 - opacity) * speedFactor);
+            }
+            box(rectEl.s);
+            translate(-rectEl.x, -rectEl.y, -rectEl.z);
         }
-        if (rectEl.s < 16 + (20 * avg[0]) && rectEl.s > 16 - (10 * avg[1])) box(rectEl.s);
-        translate(-rectEl.x, -rectEl.y, -rectEl.z);
 
         let bounds = random(.001, .005);
         let halfSize = rectEl.s / 2;
@@ -589,39 +613,45 @@ function draw() {
         circleEl.size += random(-bounds / 5, bounds / 5);
     });
 
-    /* Frequency bars */
-    if (showSpectrum && !showModel) {0
+    /* Center */
+    strokeWeight(.5);
+    fill(hueShift, 100, 50, .2);
+    stroke(hueShift, 100, 50, .1);
+    if (showSpectrum) {0
         let visWidth = 20 * (width / 2000);
         let visHeight = height / 4;
 
         // range bars
-        strokeWeight(1.5);
-        if (CSScolorMode !== 1) {
-            fill(0);
-            stroke(0, 0, 100, 255);
-        } else {
-            fill(240);
-            stroke(0, 0, 0, 255);
-        }
         let oddity = (freq.length % 2) * visWidth * 1.125;
         let freqOffset = -((freq.length - 1) / 2) * visWidth * 1.25 - oddity;
         i = freq.length - 1;
+        let rotateVector = createVector(0, 2, 0);
+        let rotation = 2 * yRotation;
+        rotateY(-rotation, rotateVector);
         freq.forEach(range => {
             range /= 255;
             freqOffset += visWidth * 1.25;
             let x = freqOffset;
-            let h = visHeight * pow(range, 1 + (i * 1.5));
-            let y;
-            if (adjustSpectrumToBase) {
-                y = -h / 2;
+            let y = 0;
+            if (showModel) {
+                adjustSpectrumToBase = true;
+                y += 250;
+                visHeight = 100;
             } else {
-                y = 0;
+                adjustSpectrumToBase = false;
+            }
+            let h = visHeight * pow(range, 1 + (i * 1.5));
+            if (adjustSpectrumToBase) {
+                y += -h / 2;
+            } else {
+                y += 0;
             }
             translate(x, y, 0);
             box(visWidth, h, visWidth);
             translate(-x, -y, 0);
             i--;
         });
+        rotateY(rotation, rotateVector);
         strokeWeight(.5);
     }
     if (showModel) {
@@ -632,9 +662,6 @@ function draw() {
         scale(upscale);
         rotateY(-rotation, rotateVector);
         rotateX(180);
-        strokeWeight(.5);
-        fill(hueShift, 100, 50, .2);
-        stroke(hueShift, 100, 50, 255);
         model(customModel);
         rotateX(-180);
         rotateY(rotation, rotateVector);

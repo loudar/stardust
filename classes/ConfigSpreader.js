@@ -18,6 +18,7 @@ class ConfigSpreader {
             try {
                 instance.setConfig(config);
             } catch (e) {
+                
                 // some might not have a SetConfig() method
             }
         });

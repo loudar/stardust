@@ -25,7 +25,9 @@ class AudioAnalyzer {
     }
 
     getAnalyzers() {
-        this.p5fft = new p5.FFT(this.config.audio.analyze.smoothing);
+        if (this.p5fft == null) {
+            this.p5fft = new p5.FFT(this.config.audio.analyze.smoothing);
+        }
 
         if (this.config.audio.useMic) {
             this.p5fft.setInput(this.mic);
@@ -58,7 +60,7 @@ class AudioAnalyzer {
     }
 
     analyze(previousFrame) {
-        // let spectrum = this.p5fft.analyze();
+        this.p5fft.analyze();
         let freq = this.getFrequencyRanges();
         let avg = [
             (freq[0] + freq[1]) / (2 * 255),

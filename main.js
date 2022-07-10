@@ -47,6 +47,7 @@ function playTrack(element) {
 }
 
 function setup(p) {
+    console.log("Startup", p);
     playController.setP5(p);
     visualizer.setP5(p);
     audioAnalyzer.setP5(p);
@@ -75,7 +76,7 @@ function setup(p) {
 
     let progress = document.querySelector("progress");
     progress.style.opacity = "1";
-    sound = p.loadSound("sounds/"+sounds[0], function() {}, function() {}, ui.showProgress);
+    sound = p.loadSound("sounds/"+sounds[0], function() {}, console.log.bind(console, "Error"), ui.showProgress);
     progress.style.opacity = "0";
 
     ui.setSound(sound);
@@ -119,13 +120,10 @@ const s = (p) => {
         setup(p);
     }
 
-    p.draw = () => {
-        draw(p);
-    }
+    p.draw = draw
 }
 
-let p = new p5(s, document.querySelector('canvas'));
-
+let p = new p5(s);
 /*
 window.preload = preload;
 window.setup = setup;

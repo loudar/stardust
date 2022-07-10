@@ -85,8 +85,6 @@ class Visualizer {
         } else {
             this.p5.background(255);
         }
-        this.p5.fill(255);
-        this.p5.box(1);
     }
 
     setMaterial() {

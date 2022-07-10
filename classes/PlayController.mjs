@@ -1,9 +1,32 @@
+class Timer {
+    elapsed = false;
+
+    constructor(duration) {
+        this.duration = duration;
+        this.reset();
+    }
+
+    isDone(){
+        return this.elapsed;
+    }
+
+    reset(){
+        this.elapsed = false;
+        setTimeout(this.elapse.bind(this), this.duration);
+    }
+
+    elapse(){
+        this.elapsed = true;
+    }
+}
+
 class PlayController {
     constructor(config, ui, analyzer, visualizer) {
         this.setConfig(config);
         this.ui = ui;
         this.analyzer = analyzer;
         this.visualizer = visualizer;
+        this.timer = new Timer(500);
     }
 
     setP5(processing) {
@@ -46,21 +69,26 @@ class PlayController {
         {
             this.playNextSound();
         }
-        if (this.sound.object.isPlaying()
-            && this.p5.millis() % 100)
+        if (this.sound.object.isPlaying() && this.timer.isDone())
         {
             this.ui.setSound(this.sound.object);
+            this.analyzer.setSound(this.sound.object);
             this.ui.updateCurrentTime();
+            this.timer.reset();
         }
     }
 
     initializeKeybinds() {
+        this.checkBindsEvent = this.checkBindsEvent ?? this.checkKeybinds.bind(this);
+
         this.removeKeybinds();
-        window.addEventListener('keydown', this.checkKeybinds.bind(this));
+        window.addEventListener('keydown', this.checkBindsEvent);
     }
 
     removeKeybinds() {
-        window.removeEventListener('keydown', this.checkKeybinds.bind(this));
+        this.checkBindsEvent = this.checkBindsEvent ?? this.checkKeybinds.bind(this);
+
+        window.removeEventListener('keydown', this.checkBindsEvent);
     }
 
     async checkKeybinds(e) {
@@ -120,7 +148,7 @@ class PlayController {
                 this.sound.object.play(0);
             }
             while (!this.sound.object.isPlaying()) {}
-            this.analyzer.getAnalyzers();
+            this.analyzer.setSound(this.sound.object);
             this.ui.updateTitle(this.sounds[this.sound.index]);
             this.ui.updateTracklist(this.sound.index);
             this.ui.updateDuration();
@@ -137,20 +165,20 @@ class PlayController {
         let listIndex = parseInt(el.id);
         this.sound.index = Math.max(0, Math.min(this.sounds.length, listIndex));
         if (this.sounds[this.sound.index]) {
-            this.playNewSound(this.sounds);
+            this.playNewSound();
         }
     }
 
     playNextSound() {
         this.sound.index++;
         if (this.sound.index > this.sounds.length - 1) this.sound.index = 0;
-        this.playNewSound(this.sounds);
+        this.playNewSound();
     }
 
     playPreviousSound() {
         this.sound.index = this.sound.index - 1;
         if (this.sound.index < 0) this.sound.index = this.sounds.length;
-        this.playNewSound(this.sounds);
+        this.playNewSound();
     }
 
     scrubTime(el) {

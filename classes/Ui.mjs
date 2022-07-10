@@ -126,7 +126,7 @@ class Ui {
         if (this.mouse.down) return;
         let currentTimeEl = document.querySelector("#currentTime");
         let currentTime = this.sound.currentTime();
-        currentTimeEl.innerHTML = new Date(1000 * currentTime).toISOString().substr(11, 8);
+        currentTimeEl.innerHTML = new Date(1000 * currentTime).toISOString().substring(11, 11+8);
         let scrubTimeEl = document.querySelector("#currentTimeScrub");
         scrubTimeEl.value = 100 * currentTime / this.sound.duration();
         this.updateDuration();
@@ -135,7 +135,7 @@ class Ui {
     updateDuration() {
         let duration = this.sound.duration();
         let durationEl = document.querySelector("#duration");
-        durationEl.innerHTML = new Date(1000 * duration).toISOString().substring(11, 8);
+        durationEl.innerHTML = new Date(1000 * duration).toISOString().substring(11, 11+8);
     }
 
     setup() {

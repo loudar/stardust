@@ -108,7 +108,7 @@ class Ui {
         for (const soundName of this.sounds){
             let soundEl = document.createElement("div");
             soundEl.classList.add("trackListTrack");
-            soundEl.id = i;
+            soundEl.id = i.toString();
             soundEl.innerHTML = soundName;
             soundEl.onclick = () => {
                 this.playController.playTrack(soundEl);

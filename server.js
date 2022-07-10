@@ -31,7 +31,9 @@ async function getFilesOfType(dir, filetype) {
 }
 
 async function startup(){
+    console.log("Fetching audio files...");
     let audioFiles = await getFilesOfType("sounds", "mp3");
+    console.log("Fetching model files...");
     let modelFiles = await getFilesOfType("models", "obj");
 
     app.use("/sounds", express.static('sounds/*'));

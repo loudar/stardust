@@ -50,6 +50,24 @@ canvas, main {
     text-align: center;
 }
 
+.horizontalFlex {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.horizontalFlex * {
+    width: max-content;
+}
+
+.volume, .time {
+    padding: 10px 10px 3px 10px;
+    background: var(--background);
+    border-radius: 5px;
+    border: 1px solid var(--foreground);
+}
+
 .trackTime {
     position: relative;
 }

@@ -94,7 +94,7 @@ class Ui {
         try {
             progress.value = value;
         } catch (e) {
-            console.log(e);
+            // float issues
         }
     }
 

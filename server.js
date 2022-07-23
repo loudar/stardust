@@ -22,7 +22,7 @@ async function getFilesOfType(dir, filetype) {
     let fileArray = await getFiles(__dirname + "/" + dir);
     fileArray = fileArray.map(file => file.substr((__dirname + "/" + dir + "/").length));
     let files = [];
-    for(file of fileArray) {
+    for(let file of fileArray) {
         if (file.substr(-filetype.length, filetype.length) === filetype) {
             files.push(file);
         }
@@ -31,7 +31,9 @@ async function getFilesOfType(dir, filetype) {
 }
 
 async function startup(){
+    console.log("Fetching audio files...");
     let audioFiles = await getFilesOfType("sounds", "mp3");
+    console.log("Fetching model files...");
     let modelFiles = await getFilesOfType("models", "obj");
 
     app.use("/sounds", express.static('sounds/*'));

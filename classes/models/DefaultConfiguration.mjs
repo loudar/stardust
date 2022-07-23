@@ -40,26 +40,22 @@ class DefaultConfiguration {
         },
         visualizer: {
             model: {
-                show: true,
                 current: "",
                 default: "models/stardust.obj"
             },
             circles: {
-                show: true,
                 max: 100,
             },
             rectangles: {
-                show: true,
                 max: 500,
             },
             lines: {
-                show: true,
                 max: 50,
             },
             spectrum: {
-                show: true,
                 adjustToBase: true
             },
+            theme: "default"
         },
         ui: {
             progress: {

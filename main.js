@@ -14,7 +14,8 @@ const ui = new Ui(config, configSpreader);
 const visualizer = new Visualizer(config);
 const playController = new PlayController(config, ui, audioAnalyzer, visualizer);
 
-ui.setPlayController(playController); // this is a bit of a workaround, but it works (?)
+// pass play controller to ui because we can't initialize both while knowing about the other
+ui.setPlayController(playController);
 
 configSpreader.addInstances([
     audioAnalyzer, visualizer, playController, ui
@@ -47,7 +48,6 @@ function playTrack(element) {
 }
 
 function setup(p) {
-    console.log("Startup", p);
     playController.setP5(p);
     visualizer.setP5(p);
     audioAnalyzer.setP5(p);
@@ -94,6 +94,8 @@ function setup(p) {
     audioFrame.time.millis = p.millis();
 
     ui.setup();
+
+    console.log("Initialization complete.");
 }
 
 function windowResized() {

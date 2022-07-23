@@ -3,6 +3,10 @@ class Visualizer {
         this.config = config;
     }
 
+    setConfig(config) {
+        this.config = config;
+    }
+
     setP5(processing) {
         this.p5 = processing;
         this.setModel(this.config.visualizer.model.default);
@@ -30,7 +34,19 @@ class Visualizer {
     model = {
         object: null,
         path: null
-    }
+    };
+    themes = {
+        "default": {
+            elements: ["circles", "rectangles", "lines", "model", "spectrum"],
+        }
+    };
+    themeFunctionMap = {
+        "circles": this.drawCircles,
+        "rectangles": this.drawRectangles,
+        "lines": this.drawLines,
+        "model": this.drawModel,
+        "spectrum": this.drawSpectrum
+    };
 
     setModels(models) {
         this.models = models;
@@ -40,7 +56,7 @@ class Visualizer {
         this.model = {
             object: this.p5.loadModel(modelPath, true),
             path: modelPath
-        }
+        };
     }
 
     draw(currentAudioFrame) {
@@ -48,11 +64,13 @@ class Visualizer {
         this.calculateWave();
 
         this.drawBase();
-        this.drawModel();
-        this.drawSpectrum();
-        this.drawLines();
-        this.drawRectangles();
-        this.drawCircles();
+
+        for (let func in this.themeFunctionMap) {
+            if (this.themes[this.config.visualizer.theme].elements.includes(func)) {
+                // call method while keeping context
+                this.themeFunctionMap[func].call(this);
+            }
+        }
     }
 
     initBase() {
@@ -140,195 +158,187 @@ class Visualizer {
     }
 
     drawSpectrum() {
-        if (this.config.visualizer.spectrum.show) {
-            let visWidth = 20 * (this.config.ui.width / 2000);
-            let visHeight = this.config.ui.height / 4;
+        let visWidth = 20 * (this.config.ui.width / 2000);
+        let visHeight = this.config.ui.height / 4;
 
-            // range bars
-            let oddity = (this.audioFrame.volume.p5.length % 2) * visWidth * 1.125;
-            let freqOffset = -((this.audioFrame.volume.p5.length - 1) / 2) * visWidth * 1.25 - oddity;
-            let i = this.audioFrame.volume.p5.length - 1;
-            let rotateVector = this.p5.createVector(0, 2, 0);
-            let rotation = 2 * this.audioFrame.perspective.yRot;
-            this.p5.rotateY(-rotation, rotateVector);
-            this.audioFrame.volume.p5.forEach(range => {
-                range /= 255;
-                freqOffset += visWidth * 1.25;
-                let x = freqOffset;
-                let y = 0;
-                if (this.config.visualizer.model.show) {
-                    this.config.visualizer.spectrum.adjustToBase = true;
-                    y += 250;
-                    visHeight = 100;
-                } else {
-                    this.config.visualizer.spectrum.adjustToBase = false;
-                }
-                let h = visHeight * Math.pow(range, 1 + (i * 1.5));
-                if (this.config.visualizer.spectrum.adjustToBase) {
-                    y += -h / 2;
-                } else {
-                    y += 0;
-                }
-                this.p5.translate(x, y, 0);
-                this.p5.box(visWidth, h, visWidth);
-                this.p5.translate(-x, -y, 0);
-                i--;
-            });
-            this.p5.rotateY(rotation, rotateVector);
-            this.p5.strokeWeight(.5);
-        }
+        // range bars
+        let oddity = (this.audioFrame.volume.p5.length % 2) * visWidth * 1.125;
+        let freqOffset = -((this.audioFrame.volume.p5.length - 1) / 2) * visWidth * 1.25 - oddity;
+        let i = this.audioFrame.volume.p5.length - 1;
+        let rotateVector = this.p5.createVector(0, 2, 0);
+        let rotation = 2 * this.audioFrame.perspective.yRot;
+        this.p5.rotateY(-rotation, rotateVector);
+        this.audioFrame.volume.p5.forEach(range => {
+            range /= 255;
+            freqOffset += visWidth * 1.25;
+            let x = freqOffset;
+            let y = 0;
+            if (this.config.visualizer.model.show) {
+                this.config.visualizer.spectrum.adjustToBase = true;
+                y += 250;
+                visHeight = 100;
+            } else {
+                this.config.visualizer.spectrum.adjustToBase = false;
+            }
+            let h = visHeight * Math.pow(range, 1 + (i * 1.5));
+            if (this.config.visualizer.spectrum.adjustToBase) {
+                y += -h / 2;
+            } else {
+                y += 0;
+            }
+            this.p5.translate(x, y, 0);
+            this.p5.box(visWidth, h, visWidth);
+            this.p5.translate(-x, -y, 0);
+            i--;
+        });
+        this.p5.rotateY(rotation, rotateVector);
+        this.p5.strokeWeight(.5);
     }
 
     drawCircles() {
-        if (this.config.visualizer.circles.show) {
-            if (this.circles.length < this.config.visualizer.circles.max) {
-                this.addCircle();
-            } else {
-                this.circles.shift();
-                this.addCircle();
-            }
-            let i = 0;
-            this.circles.forEach(circleEl => {
-                i++;
-                let opacity = i / this.circles.length;
-                opacity *= opacity;
-                let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift + (circleEl.hOffset / 10);
-                while (hue > 360) hue -= 360;
-                let satResults = this.getWaveStates(circleEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
-                let specificSat = satResults.specificSat;
-                let specificBright = satResults.specificBright;
-                opacity = satResults.opacity;
-                hue = satResults.hue;
-
-                // draw
-                this.p5.translate(circleEl.x, circleEl.y, circleEl.z);
-                if (this.config.colour.mode !== 1) {
-                    this.p5.stroke(hue, specificSat, specificBright, opacity * this.audioFrame.speed.factor);
-                } else {
-                    this.p5.stroke(hue, specificSat, 100 - specificBright, opacity * this.audioFrame.speed.factor * specificBright);
-                }
-                this.p5.noFill();
-                this.p5.circle(0, 0, circleEl.size);
-                this.p5.translate(-circleEl.x, -circleEl.y, -circleEl.z);
-                let bounds = this.p5.random(.001, .1);
-                circleEl.vx = Math.min(Math.max(circleEl.vx + this.p5.random(-bounds, bounds), -circleEl.size / 2), circleEl.size / 2);
-                circleEl.vy = Math.min(Math.max(circleEl.vy + this.p5.random(-bounds, bounds), -circleEl.size / 2), circleEl.size / 2);
-                circleEl.vz = Math.min(Math.max(circleEl.vz + this.p5.random(-bounds, bounds), -circleEl.size / 2), circleEl.size / 2);
-                circleEl.x += circleEl.vx * this.audioFrame.speed.factor;
-                circleEl.y += circleEl.vy * this.audioFrame.speed.factor;
-                circleEl.z += circleEl.vz * this.audioFrame.speed.factor;
-                circleEl.size += this.p5.random(-bounds / 5, bounds / 5);
-            });
+        if (this.circles.length < this.config.visualizer.circles.max) {
+            this.addCircle();
+        } else {
+            this.circles.shift();
+            this.addCircle();
         }
+        let i = 0;
+        this.circles.forEach(circleEl => {
+            i++;
+            let opacity = i / this.circles.length;
+            opacity *= opacity;
+            let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift + (circleEl.hOffset / 10);
+            while (hue > 360) hue -= 360;
+            let satResults = this.getWaveStates(circleEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
+            let specificSat = satResults.specificSat;
+            let specificBright = satResults.specificBright;
+            opacity = satResults.opacity;
+            hue = satResults.hue;
+
+            // draw
+            this.p5.translate(circleEl.x, circleEl.y, circleEl.z);
+            if (this.config.colour.mode !== 1) {
+                this.p5.stroke(hue, specificSat, specificBright, opacity * this.audioFrame.speed.factor);
+            } else {
+                this.p5.stroke(hue, specificSat, 100 - specificBright, opacity * this.audioFrame.speed.factor * specificBright);
+            }
+            this.p5.noFill();
+            this.p5.circle(0, 0, circleEl.size);
+            this.p5.translate(-circleEl.x, -circleEl.y, -circleEl.z);
+            let bounds = this.p5.random(.001, .1);
+            circleEl.vx = Math.min(Math.max(circleEl.vx + this.p5.random(-bounds, bounds), -circleEl.size / 2), circleEl.size / 2);
+            circleEl.vy = Math.min(Math.max(circleEl.vy + this.p5.random(-bounds, bounds), -circleEl.size / 2), circleEl.size / 2);
+            circleEl.vz = Math.min(Math.max(circleEl.vz + this.p5.random(-bounds, bounds), -circleEl.size / 2), circleEl.size / 2);
+            circleEl.x += circleEl.vx * this.audioFrame.speed.factor;
+            circleEl.y += circleEl.vy * this.audioFrame.speed.factor;
+            circleEl.z += circleEl.vz * this.audioFrame.speed.factor;
+            circleEl.size += this.p5.random(-bounds / 5, bounds / 5);
+        });
     }
 
     drawRectangles() {
-        if (this.config.visualizer.rectangles.show) {
-            if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
-                if (this.rectangles.length < this.config.visualizer.rectangles.max) {
-                    this.addRect();
-                } else {
-                    this.rectangles.shift();
-                    this.addRect();
-                }
+        if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
+            if (this.rectangles.length < this.config.visualizer.rectangles.max) {
+                this.addRect();
+            } else {
+                this.rectangles.shift();
+                this.addRect();
             }
-            let i = 0;
-            this.rectangles.forEach(rectEl => {
-                i++;
-                if (rectEl.s < 16 + (20 * this.audioFrame.volume.avg[0]) && rectEl.s > 16 - (10 * this.audioFrame.volume.avg[1])) {
-                    let opacity = i / this.rectangles.length;
-                    let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
-                    while (hue > 360) hue -= 360;
-                    opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
-                    let satResults = this.getWaveStates(rectEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
-                    let specificSat = satResults.specificSat;
-                    let specificBright = satResults.specificBright;
-                    opacity = satResults.opacity;
-                    hue = satResults.hue;
-                    let alpha = opacity * (this.audioFrame.colour.brightness / 50) * (this.audioFrame.colour.saturation / 100);
-
-                    // draw
-                    this.p5.translate(rectEl.x, rectEl.y, rectEl.z);
-
-                    if (this.config.colour.mode !== 1) {
-                        this.p5.fill(hue, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, alpha);
-                        this.p5.stroke(hue, specificSat, specificBright, (1 - opacity) * this.audioFrame.speed.factor);
-                    } else {
-                        this.p5.fill(hue, this.audioFrame.colour.saturation, 100 - this.audioFrame.colour.brightness, alpha);
-                        this.p5.stroke(hue, specificSat, 100 - specificBright, (1 - opacity) * this.audioFrame.speed.factor);
-                    }
-                    this.p5.box(rectEl.s);
-                    this.p5.translate(-rectEl.x, -rectEl.y, -rectEl.z);
-                }
-
-                let bounds = this.p5.random(.001, .005);
-                let halfSize = rectEl.s / 2;
-                rectEl.vx = Math.min(Math.max(rectEl.vx + this.p5.random(-bounds, bounds), -halfSize), halfSize);
-                rectEl.vy = Math.min(Math.max(rectEl.vy + this.p5.random(-bounds, bounds), -halfSize), halfSize);
-                rectEl.vz = Math.min(Math.max(rectEl.vz + this.p5.random(-bounds, bounds), -halfSize), halfSize);
-                rectEl.x += rectEl.vx * this.audioFrame.speed.factor;
-                rectEl.y += rectEl.vy * this.audioFrame.speed.factor;
-                rectEl.z += rectEl.vz * this.audioFrame.speed.factor;
-            });
         }
-    }
-
-    drawLines() {
-        if (this.config.visualizer.lines.show) {
-            if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
-                if (this.lines.length < this.config.visualizer.lines.max) {
-                    this.addLine();
-                } else {
-                    this.lines.shift();
-                    this.addLine();
-                }
-            }
-            let i = 0;
-            this.lines.forEach(lineEl => {
-                i++;
-                let opacity = i / this.lines.length;
+        let i = 0;
+        this.rectangles.forEach(rectEl => {
+            i++;
+            if (rectEl.s < 16 + (20 * this.audioFrame.volume.avg[0]) && rectEl.s > 16 - (10 * this.audioFrame.volume.avg[1])) {
+                let opacity = i / this.rectangles.length;
                 let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
                 while (hue > 360) hue -= 360;
-                opacity = this.p5.max(0, opacity - this.p5.random(0, 0.1));
-                let satResults = this.getWaveStates(lineEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
+                opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
+                let satResults = this.getWaveStates(rectEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
                 let specificSat = satResults.specificSat;
                 let specificBright = satResults.specificBright;
                 opacity = satResults.opacity;
                 hue = satResults.hue;
+                let alpha = opacity * (this.audioFrame.colour.brightness / 50) * (this.audioFrame.colour.saturation / 100);
 
                 // draw
-                opacity = opacity * this.audioFrame.speed.factor * this.p5.random(0.5, 1.5);
-                if (this.config.colour.mode !== 1) {
-                    this.p5.stroke(hue, specificSat, specificBright, opacity * this.audioFrame.volume.avg[0]);
-                } else {
-                    this.p5.stroke(hue, specificSat, 100 - specificBright, opacity * this.audioFrame.volume.avg[0]);
-                }
-                if ((opacity > .8 && this.audioFrame.volume.avg[0] > .5) || this.p5.random(0, 1) > .999) {
-                    this.p5.line(lineEl.x, lineEl.y, lineEl.z, lineEl.x2, lineEl.y2, lineEl.z2);
-                }
+                this.p5.translate(rectEl.x, rectEl.y, rectEl.z);
 
-                let bounds = this.p5.random(.001, .005);
-                let index = i - 2;
-                if (i === 1) {
-                    lineEl.vx = lineEl.vx + this.p5.random(-bounds, bounds);
-                    lineEl.vy = lineEl.vy + this.p5.random(-bounds, bounds);
-                    lineEl.vz = lineEl.vz + this.p5.random(-bounds, bounds);
+                if (this.config.colour.mode !== 1) {
+                    this.p5.fill(hue, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, alpha);
+                    this.p5.stroke(hue, specificSat, specificBright, (1 - opacity) * this.audioFrame.speed.factor);
                 } else {
-                    lineEl.vx = this.lines[index].vx2;
-                    lineEl.vy = this.lines[index].vy2;
-                    lineEl.vz = this.lines[index].vz2;
+                    this.p5.fill(hue, this.audioFrame.colour.saturation, 100 - this.audioFrame.colour.brightness, alpha);
+                    this.p5.stroke(hue, specificSat, 100 - specificBright, (1 - opacity) * this.audioFrame.speed.factor);
                 }
-                lineEl.x += lineEl.vx * this.audioFrame.speed.factor;
-                lineEl.y += lineEl.vy * this.audioFrame.speed.factor;
-                lineEl.z += lineEl.vz * this.audioFrame.speed.factor;
-                lineEl.vx2 = lineEl.vx2 + this.p5.random(-bounds, bounds);
-                lineEl.vy2 = lineEl.vy2 + this.p5.random(-bounds, bounds);
-                lineEl.vz2 = lineEl.vz2 + this.p5.random(-bounds, bounds);
-                lineEl.x2 += lineEl.vx2 * this.audioFrame.speed.factor;
-                lineEl.y2 += lineEl.vy2 * this.audioFrame.speed.factor;
-                lineEl.z2 += lineEl.vz2 * this.audioFrame.speed.factor;
-            });
+                this.p5.box(rectEl.s);
+                this.p5.translate(-rectEl.x, -rectEl.y, -rectEl.z);
+            }
+
+            let bounds = this.p5.random(.001, .005);
+            let halfSize = rectEl.s / 2;
+            rectEl.vx = Math.min(Math.max(rectEl.vx + this.p5.random(-bounds, bounds), -halfSize), halfSize);
+            rectEl.vy = Math.min(Math.max(rectEl.vy + this.p5.random(-bounds, bounds), -halfSize), halfSize);
+            rectEl.vz = Math.min(Math.max(rectEl.vz + this.p5.random(-bounds, bounds), -halfSize), halfSize);
+            rectEl.x += rectEl.vx * this.audioFrame.speed.factor;
+            rectEl.y += rectEl.vy * this.audioFrame.speed.factor;
+            rectEl.z += rectEl.vz * this.audioFrame.speed.factor;
+        });
+    }
+
+    drawLines() {
+        if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
+            if (this.lines.length < this.config.visualizer.lines.max) {
+                this.addLine();
+            } else {
+                this.lines.shift();
+                this.addLine();
+            }
         }
+        let i = 0;
+        this.lines.forEach(lineEl => {
+            i++;
+            let opacity = i / this.lines.length;
+            let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
+            while (hue > 360) hue -= 360;
+            opacity = this.p5.max(0, opacity - this.p5.random(0, 0.1));
+            let satResults = this.getWaveStates(lineEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
+            let specificSat = satResults.specificSat;
+            let specificBright = satResults.specificBright;
+            opacity = satResults.opacity;
+            hue = satResults.hue;
+
+            // draw
+            opacity = opacity * this.audioFrame.speed.factor * this.p5.random(0.5, 1.5);
+            if (this.config.colour.mode !== 1) {
+                this.p5.stroke(hue, specificSat, specificBright, opacity * this.audioFrame.volume.avg[0]);
+            } else {
+                this.p5.stroke(hue, specificSat, 100 - specificBright, opacity * this.audioFrame.volume.avg[0]);
+            }
+            if ((opacity > .8 && this.audioFrame.volume.avg[0] > .5) || this.p5.random(0, 1) > .999) {
+                this.p5.line(lineEl.x, lineEl.y, lineEl.z, lineEl.x2, lineEl.y2, lineEl.z2);
+            }
+
+            let bounds = this.p5.random(.001, .005);
+            let index = i - 2;
+            if (i === 1) {
+                lineEl.vx = lineEl.vx + this.p5.random(-bounds, bounds);
+                lineEl.vy = lineEl.vy + this.p5.random(-bounds, bounds);
+                lineEl.vz = lineEl.vz + this.p5.random(-bounds, bounds);
+            } else {
+                lineEl.vx = this.lines[index].vx2;
+                lineEl.vy = this.lines[index].vy2;
+                lineEl.vz = this.lines[index].vz2;
+            }
+            lineEl.x += lineEl.vx * this.audioFrame.speed.factor;
+            lineEl.y += lineEl.vy * this.audioFrame.speed.factor;
+            lineEl.z += lineEl.vz * this.audioFrame.speed.factor;
+            lineEl.vx2 = lineEl.vx2 + this.p5.random(-bounds, bounds);
+            lineEl.vy2 = lineEl.vy2 + this.p5.random(-bounds, bounds);
+            lineEl.vz2 = lineEl.vz2 + this.p5.random(-bounds, bounds);
+            lineEl.x2 += lineEl.vx2 * this.audioFrame.speed.factor;
+            lineEl.y2 += lineEl.vy2 * this.audioFrame.speed.factor;
+            lineEl.z2 += lineEl.vz2 * this.audioFrame.speed.factor;
+        });
     }
 
     getWaveStates(x, saturation, brightness, opacity, hue) {

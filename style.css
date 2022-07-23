@@ -2,11 +2,13 @@
     --background: #111;
     --background-hover: #222;
     --foreground: white;
+    --neutral: #666;
     --active: #0f6;
+    --active-dark: #002000;
 }
 
 * {
-    font-family: Arial, serif;
+    font-family: monospace;
 }
 
 body {
@@ -105,11 +107,55 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     margin-top: 10px;
 }
 
+.flex, .flex-v {
+    display: flex;
+    gap: 5px;
+}
+
+.flex-v {
+    flex-direction: column;
+}
+
+.trackControls {
+    border: 1px solid var(--foreground);
+    overflow: auto;
+    padding: 10px;
+    background: var(--background);
+}
+
+.trackControl {
+    padding: 4px;
+    border-radius: 0;
+    border: none;
+    cursor: pointer;
+}
+
+.control {
+    height: 26px;
+    width: 30px;
+    background: var(--background);
+    display: flex;
+    padding: 5px;
+    border: 1px solid var(--foreground);
+    cursor: pointer;
+}
+
+.control * {
+    cursor: pointer;
+}
+
+.icon {
+    height: 100%;
+    width: auto;
+    margin: auto;
+}
+
+.tracklist {
+    flex-direction: column;
+}
+
 .trackListContent {
-    position: absolute;
-    top: 30px;
-    left: 0;
-    max-height: 50%;
+    max-height: calc(100% - 20px);
     width: max-content;
     font-family: 'Courier New', monospace;
     display: flex;
@@ -119,23 +165,43 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     padding: 1px;
 }
 
-.toggles {
+.overlay {
     position: absolute;
+    width: max-content;
     display: flex;
-    flex-wrap: wrap;
+    height: 100%;
 }
 
-.toggles * {
-    padding: 5px 10px;
+.toggles {
+    display: flex;
+    flex-wrap: wrap;
+    opacity: 0;
+    flex-direction: column;
+}
+
+.toggles:hover, .toggles[tracklist-active="true"] {
+    opacity: 1;
+}
+
+[tracklist-active="true"] .toggle.trackList {
+    background: var(--foreground);
+    color: var(--background);
+}
+
+.toggle {
+    padding: 10px 5px;
     background: var(--background-hover);
     border: 1px solid var(--foreground);
     cursor: pointer;
-    opacity: 0;
     transition: opacity .2s ease;
+    width: 20px;
+    height: 120px;
 }
 
-.toggles *:hover {
-    opacity: 1;
+.toggleText {
+    display: block;
+    transform: rotate(90deg);
+    white-space: nowrap;
 }
 
 .trackListTrack {
@@ -143,15 +209,56 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     background: var(--background);
     cursor: pointer;
     border: 1px solid transparent;
+    display: flex;
+    gap: 10px;
+    position: relative;
 }
 
 .trackListTrack.active {
     border-color: var(--active);
     color: var(--active);
+    background: var(--active-dark);
 }
 
 .trackListTrack:hover {
     background: var(--background-hover);
+}
+
+.playingIndicator, .playingLoader {
+    color: var(--background);
+    display: none;
+    background: var(--foreground);
+    padding: 0 5px;
+    font-weight: 900;
+    border-radius: 23px;
+    z-index: 2;
+    position: absolute;
+    right: 10px;
+}
+
+.playingIndicator.active, .playingLoader.active {
+    display: initial;
+}
+
+.playingLoader {
+    animation: loader 1s linear infinite;
+    background: none;
+    border: 2px solid var(--foreground);
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    border-bottom: none;
+    border-right: none;
+    padding: 0;
+}
+
+@keyframes loader {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 progress::-moz-progress-bar, progress::-webkit-progress-value {

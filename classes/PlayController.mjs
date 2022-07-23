@@ -74,8 +74,18 @@ class PlayController {
             this.ui.setSound(this.sound.object);
             this.analyzer.setSound(this.sound.object);
             this.ui.updateCurrentTime();
+            this.ui.updateControls();
             this.timer.reset();
         }
+    }
+
+    isPlaying() {
+        return this.sound.object.isPlaying()
+            && this.p5.getAudioContext().state === 'running';
+    }
+
+    isMuted() {
+        return this.config.audio.userVolume === 0;
     }
 
     initializeKeybinds() {
@@ -118,6 +128,14 @@ class PlayController {
         } else {
             await this.startPlay();
         }
+        this.ui.updateControls(this.sound);
+    }
+
+    toggleMute() {
+        this.bufferVolume = this.config.audio.userVolume === 0 ? this.bufferVolume : this.config.audio.userVolume;
+        this.config.audio.userVolume = this.config.audio.userVolume === 0 ? this.bufferVolume : 0;
+        this.updateVolume()
+        this.ui.updateControls();
     }
 
     async startPlay() {
@@ -126,7 +144,6 @@ class PlayController {
         }
         if (this.p5.getAudioContext().state !== 'running') {
             await this.p5.getAudioContext().resume();
-            return;
         }
         // if (!audioPlayed) {
         //     sound.play();
@@ -137,6 +154,7 @@ class PlayController {
 
     playNewSound() {
         this.sound.loading = true;
+        this.ui.updatePlayingLoaders(this.sound.index);
         this.sound.object.stop();
         this.sound.object.setPath("sounds/"+this.sounds[this.sound.index], () => {
             if (this.p5.getAudioContext().state !== 'running') {
@@ -152,13 +170,14 @@ class PlayController {
             this.ui.updateTitle(this.sounds[this.sound.index]);
             this.ui.updateTracklist(this.sound.index);
             this.ui.updateDuration();
+            this.ui.updatePlayingIndicators(this.sound.index);
             this.visualizer.updateModel(this.sounds[this.sound.index]);
             this.sound.loading = false;
         });
     }
 
     /**
-     * Uses the {@link el.id} (Usually set with {@link TODO}) to find the correct sound and attempts to play it.
+     * Uses the {@link el.id} to find the correct sound and attempts to play it.
      * @param el
      */
     playTrack(el) {

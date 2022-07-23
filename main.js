@@ -48,6 +48,8 @@ function playTrack(element) {
 }
 
 function setup(p) {
+    console.info("%cSTARDUST: Starting initialization...", "color: #f7f700");
+
     playController.setP5(p);
     visualizer.setP5(p);
     audioAnalyzer.setP5(p);
@@ -95,7 +97,7 @@ function setup(p) {
 
     ui.setup();
 
-    console.log("Initialization complete.");
+    console.info("%cSTARDUST: Initialization complete!", "color: #00ff00");
 }
 
 function windowResized() {
@@ -114,7 +116,9 @@ function draw() {
 
 const s = (p) => {
     p.preload = () => {
+        console.info("STARDUST: (preload) Loading sounds...");
         sounds = p.loadJSON("/sounds");
+        console.info("STARDUST: (preload) Loading models...");
         models = p.loadJSON("/models");
     }
 

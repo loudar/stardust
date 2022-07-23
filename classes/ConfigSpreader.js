@@ -22,7 +22,6 @@ class ConfigSpreader {
                 // some might not have a SetConfig() method
             }
         });
-        console.log(`ConfigSpreader: spread config to ${this.instances.length} instances`);
     }
 }
 

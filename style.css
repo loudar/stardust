@@ -5,6 +5,7 @@
     --neutral: #666;
     --active: #0f6;
     --active-dark: #002000;
+    --icon-filter: brightness(1);
 }
 
 * {
@@ -148,6 +149,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     height: 100%;
     width: auto;
     margin: auto;
+    filter: var(--icon-filter);
 }
 
 .tracklist {

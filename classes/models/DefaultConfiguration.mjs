@@ -17,12 +17,14 @@ class DefaultConfiguration {
                     "background-hover": "#222",
                     "foreground": "white",
                     "active": "#0f6",
+                    "icon-filter": "brightness(1)"
                 },
                 {
                     "background": "#eee",
                     "background-hover": "#ddd",
                     "foreground": "black",
                     "active": "#0a1",
+                    "icon-filter": "brightness(0)"
                 },
             ],
             mode: 0

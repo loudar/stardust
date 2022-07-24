@@ -36,9 +36,10 @@ class DefaultConfiguration {
             userVolume: 1,
             useMic: false,
             analyze: {
-                smoothing: .7,
+                smoothing: .8,
                 thresholds: [.3, .3],
-                peakThreshold: .95,
+                peakThresholdHigh: .99,
+                peakThresholdLow: .9,
                 peakHueShift: false,
                 volumeFunction: (v) => {
                     let e = .5 + 4 * Math.pow(v - .5, 3);
@@ -70,6 +71,9 @@ class DefaultConfiguration {
                     active: true,
                     intensity: 5,
                     phase: 0,
+                },
+                cameraShake: {
+                    active: false
                 }
             }
         },

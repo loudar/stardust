@@ -39,12 +39,25 @@ class AudioFrame {
         const hueV = Math.min(Math.max(-3, previousFrame.colour.hueV + p5.random(-.1, .1)), 3);
         const hueArea = Math.min(Math.max(90, previousFrame.colour.hueArea + hueV), hueLimit);
 
-        const peakTreshhold = config.audio.analyze.peakThreshold;
-        if (speed > peakTreshhold && p5.random(0, 1) > .3 && !previousFrame.waitForNextPeak && config.audio.analyze.peakHueShift) {
-            hueShift += 30;
-            if (hueShift >= this.fullHueRange) hueShift -= this.fullHueRange;
+        const peakTreshholdH = config.audio.analyze.peakThresholdHigh;
+        const peakTreshholdL = config.audio.analyze.peakThresholdLow;
+        this.lastPeaks = previousFrame.lastPeaks !== undefined ? previousFrame.lastPeaks : [];
+        this.waitForNextPeak = previousFrame.waitForNextPeak !== undefined ? previousFrame.waitForNextPeak : false;
+        if (speed > peakTreshholdH && !previousFrame.waitForNextPeak) {
+            if (config.audio.analyze.peakHueShift) {
+                hueShift += 30;
+                if (hueShift >= this.fullHueRange) hueShift -= this.fullHueRange;
+            }
+
             this.waitForNextPeak = true;
-        } else if (speed < peakTreshhold) {
+            let peak = {
+                timestamp: p5.millis(),
+            };
+            if (this.lastPeaks.length > 10) {
+                this.lastPeaks.shift();
+            }
+            this.lastPeaks.push(peak);
+        } else if (speed < peakTreshholdL) {
             this.waitForNextPeak = false;
         }
 

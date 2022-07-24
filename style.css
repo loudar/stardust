@@ -9,7 +9,7 @@
 }
 
 * {
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
 }
 
 body {
@@ -22,14 +22,10 @@ body {
     overflow: hidden;
 }
 
-canvas, main {
-    width: 100% !important;
-    height: 100% !important;
-}
-
 #p5_loading {
     top: 30px;
     padding: 5px 10px;
+    display: none;
 }
 
 .trackInfo {
@@ -161,7 +157,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 }
 
 .trackListContent, .settings {
-    max-height: calc(100% - 20px);
+    max-height: calc(100% - 107px);
     width: max-content;
     font-family: 'Courier New', monospace;
     display: flex;
@@ -220,6 +216,8 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     display: block;
     transform: rotate(90deg);
     white-space: nowrap;
+    font-weight: 800;
+    font-family: sans-serif;
 }
 
 .trackListTrack {

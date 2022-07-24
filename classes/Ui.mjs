@@ -2,12 +2,13 @@ import {Jens} from 'https://jensjs.com/latest/jens.js';
 import {Commons, Controls, Layouts} from "./Ui/Templates.js";
 
 class Ui {
-    constructor(config, configSpreader) {
+    constructor(config, configSpreader, visualizer) {
         this.setConfig(config);
         this.configSpreader = configSpreader;
         this.setupMouse();
         const templates = this.getTemplates();
         this.jens = new Jens(templates);
+        this.visualizer = visualizer;
     }
 
     getTemplates() {
@@ -395,8 +396,24 @@ class Ui {
             },
             {
                 template: "settingBool",
+                data: { setting_id: "setting_enableMic", setting_name: "Use microphone instead of sounds", setting_default: "false", changeFunc: this.toggleMic.bind(this) }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableModel", setting_name: "Show .obj in the center", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableModel", "model") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enablePeaks", setting_name: "Show peaks", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enablePeaks", "peaks") }
+            },
+            {
+                template: "settingBool",
                 data: { setting_id: "setting_peakHueShift", setting_name: "Shift hue on peaks", setting_default: this.config.audio.analyze.peakHueShift.toString(), changeFunc: this.togglePeakHueShift.bind(this) }
             },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_cameraShake", setting_name: "Camera shake", setting_default: "false", changeFunc: this.enableEffect.bind(this, "setting_cameraShake", "cameraShake") }
+            }
         ];
         settingMap.forEach(control => {
                 let child = this.jens.createFromTemplateName(control.template, control.data);
@@ -408,31 +425,32 @@ class Ui {
         );
     }
 
-    toggleMic(e) {
-        let toggle = e.target;
-        if (toggle.tagName.toLowerCase() === "div") toggle = toggle.firstElementChild;
+    toggleMic() {
         this.config.audio.useMic = !this.config.audio.useMic;
-        let buttonText;
-        if (this.config.audio.useMic) {
-            buttonText = "Disable mic";
-        } else {
-            buttonText = "Enable mic";
-        }
-        toggle.innerHTML = buttonText;
+        const input = document.querySelector("#setting_enableMic");
+        input.checked = this.config.audio.useMic;
         this.updateConfig();
     }
 
-    toggleModel(e) {
-        let toggle = e.target;
-        if (toggle.tagName.toLowerCase() === "div") toggle = toggle.firstElementChild;
-        this.config.visualizer.model.show = !this.config.visualizer.model.show;
-        let buttonText;
-        if (this.config.visualizer.model.show) {
-            buttonText = "Disable model";
+    enableThemeSettingWithId(id, setting) {
+        this.enableThemeSetting(setting);
+        const input = document.querySelector("#"+id);
+        input.checked = this.visualizer.themes[this.config.visualizer.theme].elements.includes(setting);
+        this.updateConfig();
+    }
+
+    enableThemeSetting(setting) {
+        if (this.visualizer.themes[this.config.visualizer.theme].elements.includes(setting)) {
+            this.visualizer.themes[this.config.visualizer.theme].elements.splice(this.visualizer.themes[this.config.visualizer.theme].elements.indexOf(setting), 1);
         } else {
-            buttonText = "Enable model";
+            this.visualizer.themes[this.config.visualizer.theme].elements.push(setting);
         }
-        toggle.innerHTML = buttonText;
+    }
+
+    enableEffect(id, effect) {
+        this.config.visualizer.effects[effect].active = !this.config.visualizer.effects[effect].active;
+        const input = document.querySelector("#"+id);
+        input.checked = this.config.visualizer.effects[effect].active;
         this.updateConfig();
     }
 
@@ -448,16 +466,6 @@ class Ui {
                 toggleName: "settingsList",
                 toggleText: "Settings",
                 toggleClickFunc: this.toggleSettingsList.bind(this)
-            },
-            {
-                toggleName: "micToggle",
-                toggleText: "Enable mic",
-                toggleClickFunc: this.toggleMic.bind(this)
-            },
-            {
-                toggleName: "modelToggle",
-                toggleText: "Enable model",
-                toggleClickFunc: this.toggleModel.bind(this)
             }
         ];
         toggleMap.forEach(toggle => {

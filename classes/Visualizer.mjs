@@ -37,15 +37,16 @@ class Visualizer {
     };
     themes = {
         "default": {
-            elements: ["circles", "rectangles", "lines", "model", "spectrum"],
-        }
+            elements: ["rectangles", "lines", "spectrum"],
+        },
     };
     themeFunctionMap = {
         "circles": this.drawCircles,
         "rectangles": this.drawRectangles,
         "lines": this.drawLines,
         "model": this.drawModel,
-        "spectrum": this.drawSpectrum
+        "spectrum": this.drawSpectrum,
+        "peaks": this.drawPeaks
     };
 
     setModels(models) {
@@ -83,12 +84,37 @@ class Visualizer {
 
         for (let func in this.themeFunctionMap) {
             if (this.themes[this.config.visualizer.theme].elements.includes(func)) {
-                // call method while keeping context
-                this.themeFunctionMap[func].call(this);
+                this.themeFunctionMap[func].call(this, currentAudioFrame);
             }
         }
 
         this.drawEffects();
+    }
+
+    drawPeaks(frame) {
+        let peaks = frame.lastPeaks;
+        for (let i = 0; i < peaks.length; i++) {
+            const peak = peaks[i];
+            const peakTime = this.p5.millis() - peak.timestamp;
+
+            this.drawPeak(peakTime / 10);
+            //this.drawPeak(- peakTime / 10);
+        }
+    }
+
+    drawPeak(x) {
+        //this.p5.translate(-x, - 20, -20);
+
+        const f = 1 - Math.min(1, x / 500);
+        this.p5.noFill();
+        this.p5.stroke(Math.floor(255 * f));
+
+        /*this.p5.fill(255, 255, 255, 255);
+        this.p5.box(1, 150, 1);*/
+        this.p5.circle(0, 0, x);
+        //this.p5.noSmooth();
+
+        //this.p5.translate(x, 20, 20);
     }
 
     drawEffects() {
@@ -115,7 +141,12 @@ class Visualizer {
     }
 
     setCamera() {
-        this.p5.camera(0, 0, this.config.ui.cameraDistance + (this.audioFrame.speed.factor * this.config.ui.height * .001));
+        if (this.config.visualizer.effects.cameraShake.active) {
+            this.p5.camera(0, 0, this.config.ui.cameraDistance + (this.audioFrame.speed.factor * this.config.ui.height * .001));
+        } else {
+            this.p5.camera(0, 0, this.config.ui.cameraDistance);
+        }
+
         this.p5.rotateY(this.audioFrame.perspective.yRot);
     }
 
@@ -152,22 +183,20 @@ class Visualizer {
     }
 
     drawModel() {
-        if (this.config.visualizer.model.show) {
-            let upscale = 1 + (this.audioFrame.volume.avg[0] * .3);
-            let rotateVector = this.p5.createVector(0, 2, 0);
-            let rotation = 2 * this.audioFrame.perspective.yRot;
+        let upscale = 1 + (this.audioFrame.volume.avg[0] * .3);
+        let rotateVector = this.p5.createVector(0, 2, 0);
+        let rotation = 2 * this.audioFrame.perspective.yRot;
 
-            this.p5.scale(upscale);
-            this.p5.rotateY(-rotation, rotateVector);
-            this.p5.rotateX(180);
-            this.p5.model(this.model.object);
-            this.p5.rotateX(-180);
-            this.p5.rotateY(rotation, rotateVector);
-        }
+        this.p5.scale(upscale);
+        this.p5.rotateY(-rotation, rotateVector);
+        this.p5.rotateX(180);
+        this.p5.model(this.model.object);
+        this.p5.rotateX(-180);
+        this.p5.rotateY(rotation, rotateVector);
     }
 
     updateModel(trackName) {
-        if (!this.config.visualizer.model.show) return;
+        if (!this.themes[this.config.visualizer.theme].elements.includes("model")) return;
         let modelFound = false;
         for(const modelName of this.models) {
             let modelN = modelName.substring(0, modelName.indexOf("."));
@@ -198,7 +227,7 @@ class Visualizer {
             freqOffset += visWidth * 1.25;
             let x = freqOffset;
             let y = 0;
-            if (this.config.visualizer.model.show) {
+            if (this.themes[this.config.visualizer.theme].elements.includes("model")) {
                 this.config.visualizer.spectrum.adjustToBase = true;
                 y += 250;
                 visHeight = 100;
@@ -385,7 +414,8 @@ class Visualizer {
             specificSat = saturation;
             specificBright = brightness;
         }
-        return {specificSat, specificBright, opacity, hue};
+        //return {specificSat, specificBright, opacity, hue};
+        return {specificSat: saturation, specificBright: brightness, opacity, hue};
     }
 
     calculateWave() {

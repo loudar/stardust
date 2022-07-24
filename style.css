@@ -38,6 +38,10 @@ canvas, main {
     bottom: 0;
 }
 
+.sliderContainer {
+    display: flex;
+}
+
 .trackInfoContainer {
     position: relative;
     width: 100%;
@@ -78,6 +82,7 @@ canvas, main {
 input[type="range"] {
     background: none;
     border: none;
+    margin: auto;
 }
 
 input[type="range"]::-webkit-slider-thumb, input[type="range"]::-moz-range-thumb {
@@ -104,8 +109,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 }
 
 .trackTitle {
-    font-size: 40px;
-    margin-top: 10px;
+    font-size: 20px;
 }
 
 .flex, .flex-v {
@@ -156,7 +160,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     flex-direction: column;
 }
 
-.trackListContent {
+.trackListContent, .settings {
     max-height: calc(100% - 20px);
     width: max-content;
     font-family: 'Courier New', monospace;
@@ -164,6 +168,13 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     flex-direction: column;
     border: 1px solid var(--foreground);
     overflow: auto;
+    padding: 1px;
+    background: var(--background-hover);
+}
+
+.settings {
+    display: none;
+    height: max-content;
     padding: 1px;
 }
 
@@ -181,7 +192,7 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     flex-direction: column;
 }
 
-.toggles:hover, .toggles[tracklist-active="true"] {
+.toggles:hover, .toggles[tracklist-active="true"], .toggles[settingslist-active="true"] {
     opacity: 1;
 }
 
@@ -190,14 +201,19 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     color: var(--background);
 }
 
+[settingslist-active="true"] .toggle.settingsList {
+    background: var(--foreground);
+    color: var(--background);
+}
+
 .toggle {
     padding: 10px 5px;
-    background: var(--background-hover);
     border: 1px solid var(--foreground);
     cursor: pointer;
     transition: opacity .2s ease;
     width: 20px;
     height: 120px;
+    background: var(--background);
 }
 
 .toggleText {
@@ -276,4 +292,79 @@ progress {
     border: 1px solid var(--foreground);
     border-radius: 5px;
     opacity: 0;
+}
+
+/* The container */
+.checkbox-container {
+    display: block;
+    position: relative;
+    padding-left: 25px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: transparent;
+    border: 1px solid var(--neutral);
+    border-radius: 50%;
+}
+
+.settingBool:hover .checkmark {
+    background: var(--background-hover);
+}
+
+.checkmark-icon {
+    top: -4px;
+    position: absolute;
+    left: 2px;
+    font-size: 18px;
+    display: none;
+}
+
+.checkmark-text {
+    font-size: 16px;
+}
+
+.checkbox-container input:checked ~ .checkmark .checkmark-icon {
+    display: initial;
+}
+
+.settingBool {
+    padding: 8px 16px 8px 8px;
+    background: var(--neutral);
+    cursor: pointer;
+    background: var(--background);
+    border: 1px solid var(--foreground);
+}
+
+.settingBool * {
+    cursor: pointer;
+}
+
+.settingBool:hover {
+    background: var(--active-dark);
+    border-color: var(--active);
+}
+
+.settingBool:hover .checkmark-text {
+    color: var(--active);
+}
+
+.settingBool:hover .checkmark {
+    border-color: var(--active);
 }

@@ -1,5 +1,5 @@
-import { Jens } from 'https://jensjs.com/latest/jens.js';
-import { Commons, Layouts, Controls } from "./Ui/Templates.js";
+import {Jens} from 'https://jensjs.com/latest/jens.js';
+import {Commons, Controls, Layouts} from "./Ui/Templates.js";
 
 class Ui {
     constructor(config, configSpreader) {
@@ -106,11 +106,27 @@ class Ui {
         let tracklist = document.querySelector(".tracklist");
         let toggles = document.querySelector(".toggles");
         if (tracklist.style.display === "none") {
+            if (toggles.getAttribute("settingslist-active") === "true") this.toggleSettingsList();
+
             tracklist.style.display = "flex";
             toggles.setAttribute("tracklist-active", "true");
         } else {
             tracklist.style.display = "none";
             toggles.setAttribute("tracklist-active", "false");
+        }
+    }
+
+    toggleSettingsList() {
+        let settingslist = document.querySelector(".settings");
+        let toggles = document.querySelector(".toggles");
+        if (settingslist.style.display === "none") {
+            if (toggles.getAttribute("tracklist-active") === "true") this.toggleTrackList();
+
+            settingslist.style.display = "flex";
+            toggles.setAttribute("settingslist-active", "true");
+        } else {
+            settingslist.style.display = "none";
+            toggles.setAttribute("settingslist-active", "false");
         }
     }
 
@@ -135,7 +151,12 @@ class Ui {
     }
 
     updateTitle(trackName) {
-        document.querySelector("h1").innerHTML = trackName;
+        if (trackName.split) {
+            let parts = trackName.split(".");
+            document.querySelector(".trackTitle").innerHTML = parts.slice(0, parts.length - 1).join(".");
+        } else {
+            document.querySelector(".trackTitle").innerHTML = "No track playing";
+        }
     }
 
     createTracklist() {
@@ -245,10 +266,18 @@ class Ui {
         if (this.mouse.down) return;
         let currentTimeEl = document.querySelector("#currentTime");
         let currentTime = this.sound.currentTime();
-        currentTimeEl.innerHTML = new Date(1000 * currentTime).toISOString().substring(11, 11+8);
-        let scrubTimeEl = document.querySelector("#currentTimeScrub");
+        let timeString = new Date(1000 * currentTime).toISOString().substring(11, 11+8);
+        currentTimeEl.innerHTML = timeString.startsWith("00") ? timeString.substring(3) : timeString;
+        let scrubTimeEl = document.querySelector("#control_time");
         scrubTimeEl.value = 100 * currentTime / this.sound.duration();
         this.updateDuration();
+    }
+
+    updateDuration() {
+        let duration = this.sound.duration();
+        let durationEl = document.querySelector("#duration");
+        let timeString = new Date(1000 * duration).toISOString().substring(11, 11+8);
+        durationEl.innerHTML = timeString.startsWith("00") ? timeString.substring(3) : timeString;
     }
 
     updatePlayingLoaders(index) {
@@ -286,61 +315,94 @@ class Ui {
         }
     }
 
-    updateDuration() {
-        let duration = this.sound.duration();
-        let durationEl = document.querySelector("#duration");
-        durationEl.innerHTML = new Date(1000 * duration).toISOString().substring(11, 11+8);
-    }
-
     setup() {
         let body = document.querySelector("body");
         body.appendChild(this.jens.createFromTemplateName("overlay"));
         this.setupToggles();
         this.setupControls();
+        this.setupSettings();
         this.createTracklist();
-
-        this.setupVolumeSlider();
-        this.setupScrubTime();
 
         this.updateTitle(this.sound);
         this.updateTracklist();
         this.updateDuration();
     }
 
-    toggleDarkMode(e) {
-        let toggle = e.target;
-        if (toggle.tagName.toLowerCase() === "div") toggle = toggle.firstElementChild;
+    toggleDarkMode() {
         this.config.colour.mode = 1 - this.config.colour.mode;
+        const input = document.querySelector('#setting_darkmode');
+        input.checked = this.config.colour.mode === 0;
         this.updateConfig();
-        let buttonText;
-        switch (this.config.colour.mode) {
-            case 0:
-                buttonText = "Lights on";
-                break;
-            case 1:
-                buttonText = "Lights off";
-                break;
-        }
-        toggle.innerHTML = buttonText;
         this.changeColors();
     }
 
-    setupVolumeSlider() {
-        let volumeSlider = document.querySelector("#volumeSlider");
-        volumeSlider.onchange = () => {
-            this.config.audio.userVolume = volumeSlider.value / 100;
-            this.updateConfig();
-        }
+    togglePeakHueShift() {
+        this.config.audio.analyze.peakHueShift = !this.config.audio.analyze.peakHueShift;
+        const input = document.querySelector("#setting_peakHueShift");
+        input.checked = this.config.audio.analyze.peakHueShift;
+        this.updateConfig();
+        this.changeColors();
     }
 
     setupControls() {
-        let parent = document.querySelector(".trackControls");
+        let parents = document.querySelectorAll(".trackControlsRow");
         const controlMap = [
-            { control_id: "control_play", control_text: "PLAY", icon_src: "img/play.svg", icon_id: "icon_play", clickFunc: async () => { await this.playController.togglePlay(); }},
-            { control_id: "control_mute", control_text: "MUTE", icon_src: "img/mute.svg", icon_id: "icon_mute", clickFunc: async () => { await this.playController.toggleMute(); }},
+            {
+                template: "control",
+                data: { control_id: "control_play", control_text: "PLAY", icon_src: "img/play.svg", icon_id: "icon_play", clickFunc: async () => { await this.playController.togglePlay(); }}
+            },
+            {
+                template: "control",
+                data: { control_id: "control_mute", control_text: "MUTE", icon_src: "img/mute.svg", icon_id: "icon_mute", clickFunc: async () => { await this.playController.toggleMute(); }}
+            },
+            {
+                template: "controlSlider",
+                data: { control_id: "control_volume", control_text: "VOLUME", control_value: "100", changeFunc: async (e) => {
+                    let value = e.target.value;
+                    this.config.audio.userVolume = value / 100;
+                    this.updateConfig();
+                    await this.playController.updateVolume();
+                }}
+            },
+        ];
+        const songControlMap = [
+            {
+                template: "controlTitle",
+                data: { control_text: "No title playing", control_id: "control_time", control_value: "0", changeFunc: (e) => {
+                        this.playController.scrubTime(e.target);
+                    }
+                }
+            }
         ];
         controlMap.forEach(control => {
-                let child = this.jens.createFromTemplateName("control", control);
+                let child = this.jens.createFromTemplateName(control.template, control.data);
+                parents[0].appendChild(child);
+            }
+        );
+        songControlMap.forEach(control => {
+                let child = this.jens.createFromTemplateName(control.template, control.data);
+                parents[1].appendChild(child);
+            }
+        );
+    }
+
+    setupSettings() {
+        let parent = document.querySelector(".settings");
+        const settingMap = [
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_darkmode", setting_name: "Dark mode", setting_default: "true", changeFunc: this.toggleDarkMode.bind(this) }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_peakHueShift", setting_name: "Shift hue on peaks", setting_default: this.config.audio.analyze.peakHueShift.toString(), changeFunc: this.togglePeakHueShift.bind(this) }
+            },
+        ];
+        settingMap.forEach(control => {
+                let child = this.jens.createFromTemplateName(control.template, control.data);
+                if (control.data.setting_default === "true") {
+                    child.querySelector('input#'+control.data.setting_id).checked = true;
+                }
                 parent.appendChild(child);
             }
         );
@@ -383,9 +445,9 @@ class Ui {
                 toggleClickFunc: this.toggleTrackList.bind(this)
             },
             {
-                toggleName: "darkMode",
-                toggleText: "Lights on",
-                toggleClickFunc: this.toggleDarkMode.bind(this)
+                toggleName: "settingsList",
+                toggleText: "Settings",
+                toggleClickFunc: this.toggleSettingsList.bind(this)
             },
             {
                 toggleName: "micToggle",
@@ -403,13 +465,6 @@ class Ui {
                 parent.appendChild(child);
             }
         );
-    }
-
-    setupScrubTime() {
-        let scrub = document.querySelector("#currentTimeScrub");
-        scrub.onchange = () => {
-            this.playController.scrubTime(scrub);
-        };
     }
 }
 

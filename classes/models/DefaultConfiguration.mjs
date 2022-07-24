@@ -17,6 +17,7 @@ class DefaultConfiguration {
                     "background-hover": "#222",
                     "foreground": "white",
                     "active": "#0f6",
+                    "active-dark": "#002000",
                     "icon-filter": "brightness(1)"
                 },
                 {
@@ -24,6 +25,7 @@ class DefaultConfiguration {
                     "background-hover": "#ddd",
                     "foreground": "black",
                     "active": "#0a1",
+                    "active-dark": "#efe",
                     "icon-filter": "brightness(0)"
                 },
             ],
@@ -36,7 +38,12 @@ class DefaultConfiguration {
             analyze: {
                 smoothing: .7,
                 thresholds: [.3, .3],
-                peakThreshold: .99
+                peakThreshold: .95,
+                peakHueShift: false,
+                volumeFunction: (v) => {
+                    let e = .5 + 4 * Math.pow(v - .5, 3);
+                    return e - (e - v) * .6;
+                }
             },
             autoplay: false,
         },
@@ -57,7 +64,14 @@ class DefaultConfiguration {
             spectrum: {
                 adjustToBase: true
             },
-            theme: "default"
+            theme: "default",
+            effects: {
+                chromaticAberration: {
+                    active: true,
+                    intensity: 5,
+                    phase: 0,
+                }
+            }
         },
         ui: {
             progress: {

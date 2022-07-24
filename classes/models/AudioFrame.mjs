@@ -20,6 +20,7 @@ class AudioFrame {
         }
 
         let speed = Math.min(1, (this.volume.avg[0] + this.volume.avg[1]) * .5);
+        speed = config.audio.analyze.volumeFunction(speed);
 
         if (isNaN(previousFrame.colour.hueShift)) {
             previousFrame.colour.hueShift = 0;
@@ -39,7 +40,7 @@ class AudioFrame {
         const hueArea = Math.min(Math.max(90, previousFrame.colour.hueArea + hueV), hueLimit);
 
         const peakTreshhold = config.audio.analyze.peakThreshold;
-        if (speed > peakTreshhold && p5.random(0, 1) > .3 && !previousFrame.waitForNextPeak) {
+        if (speed > peakTreshhold && p5.random(0, 1) > .3 && !previousFrame.waitForNextPeak && config.audio.analyze.peakHueShift) {
             hueShift += 30;
             if (hueShift >= this.fullHueRange) hueShift -= this.fullHueRange;
             this.waitForNextPeak = true;

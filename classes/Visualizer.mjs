@@ -59,6 +59,22 @@ class Visualizer {
         };
     }
 
+    chromaticAberration(canvas, intensity, phase){
+        let ctx = canvas.getContext("webgl");
+        /* Use canvas to draw the original image, and load pixel data by calling getImageData
+        The ImageData.data is an one-dimentional Uint8Array with all the color elements flattened. The array contains data in the sequence of [r,g,b,a,r,g,b,a...]
+        Because of the cross-origin issue, remember to run the demo in a localhost server or the getImageData call will throw error
+        */
+        const imageData = new Uint8Array(ctx.drawingBufferHeight * ctx.drawingBufferWidth * 4);
+        ctx.readPixels(0, 0, ctx.drawingBufferHeight, ctx.drawingBufferWidth, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);
+
+        for (let i = phase % 4; i < imageData.length; i += 4) {
+            // Setting the start of the loop to a different integer will change the aberration color, but a start integer of 4n-1 will not work
+            imageData[i] = imageData[i + 4 * intensity];
+        }
+        ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.drawingBufferHeight, ctx.drawingBufferWidth, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);
+    }
+
     draw(currentAudioFrame) {
         this.audioFrame = currentAudioFrame;
         this.calculateWave();
@@ -71,6 +87,15 @@ class Visualizer {
                 this.themeFunctionMap[func].call(this);
             }
         }
+
+        this.drawEffects();
+    }
+
+    drawEffects() {
+        /*if (this.config.visualizer.effects.chromaticAberration.active) {
+            let canvas = document.querySelector("canvas");
+            this.chromaticAberration(canvas, this.config.visualizer.effects.chromaticAberration.intensity, this.config.visualizer.effects.chromaticAberration.phase);
+        }*/
     }
 
     initBase() {

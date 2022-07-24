@@ -12,43 +12,6 @@
     </head>
     <body>
         <script src="main.js" type="module"></script>
-        <div class="trackInfo">
-            <div class="trackInfoContainer">
-                <div class="horizontalFlex">
-                    <div class="volume">
-                        <div class="volumeText">
-                            <span>Volume</span>
-                        </div>
-                        <div class="volumeContainer">
-                            <label for="volumeSlider" style="display: none;"></label>
-                            <input value="100" max="100" type="range" id="volumeSlider">
-                        </div>
-                    </div>
-                    <div class="time">
-                        <div class="trackTime">
-                            <span id="currentTime">0:00</span>
-                            <span>/</span>
-                            <span id="duration">0:00</span>
-                        </div>
-                        <div class="trackTimeScrub">
-                            <label for="currentTimeScrub" style="display: none;"></label>
-                            <input value="0" max="100" type="range" id="currentTimeScrub">
-                        </div>
-                    </div>
-                </div>
-                <h1 class="trackTitle"></h1>
-            </div>
-        </div>
-        <!--
-        <div class="trackList">
-            <div class="trackListContent"></div>
-            <div class="toggles">
-                <div class="trackListToggle">Tracks</div>
-                <div class="darkModeToggle">Lights on</div>
-                <div class="micToggle">Enable mic</div>
-                <div class="modelToggle">Disable model</div>
-            </div>
-        </div>-->
         <progress value="0" max="1"></progress>
         <audio src="" style="display: none;"></audio>
     </body>

@@ -88,12 +88,6 @@ class Visualizer {
         this.shaders.chromaticAberration.setUniform("u_texture", this.secondCanvas);
         this.shaders.chromaticAberration.setUniform("resolution", [canvas.width, canvas.height]);
 
-        /*
-        secondCanvas.texture(mainCanvas); 
-        secondCanvas.rect(0, 0, width, height); 
-        then do this.shaders.chromaticAberration.setUniform("tInput", secondCanvas);
-        */
-
         /* Use canvas to draw the original image, and load pixel data by calling getImageData
         The ImageData.data is an one-dimentional Uint8Array with all the color elements flattened. The array contains data in the sequence of [r,g,b,a,r,g,b,a...]
         Because of the cross-origin issue, remember to run the demo in a localhost server or the getImageData call will throw error

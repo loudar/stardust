@@ -50,6 +50,8 @@ async function setup(p) {
     config.ui.height = window.innerHeight;
     p.createCanvas(config.ui.width, config.ui.height - 4, 'webgl');
 
+    let secondCanvas = p.createGraphics(config.ui.width, config.ui.height - 4, p.WEBGL);
+
     if (setupRan) {
         return;
     }
@@ -60,6 +62,12 @@ async function setup(p) {
     console.info("STARDUST: Loading models...");
     models = await fetch('/models');
     models = await models.json();
+
+    console.info("STARDUST: Loading shaders...");
+    let shaders = {
+        chromaticAberration: p.loadShader('shaders/chromaticAberration.vert', 'shaders/chromaticAberration.frag')
+    }
+    visualizer.addShaders(secondCanvas, shaders);
 
     sounds = Object.values(sounds);
     playController.setSounds(sounds);

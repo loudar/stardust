@@ -12,6 +12,11 @@ class Visualizer {
         this.setModel(this.config.visualizer.model.default);
     }
 
+    addShaders(secondCanvas, shaders) {
+        this.secondCanvas = secondCanvas;
+        this.shaders = shaders;
+    }
+
     circles = [];
     rectangles = [];
     boxy = [];
@@ -66,19 +71,39 @@ class Visualizer {
     *  At the moment leads to crash, because too many webgl contexts are created.
      */
     chromaticAberration(canvas, intensity, phase){
+        // maybe like this? https://github.com/aferriss/p5jsShaderExamples/tree/gh-pages/4_image-effects/4-2_rgb-split
+
+        this.p5.shader(this.shaders.chromaticAberration);
+
         let ctx = canvas.getContext("webgl");
+        
+        /*const imageData = new Uint8Array(ctx.drawingBufferHeight * ctx.drawingBufferWidth * 4);
+        ctx.readPixels(0, 0, ctx.drawingBufferHeight - 1, ctx.drawingBufferWidth - 1, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);*/
+
+        //var textureLocation = ctx.getUniformLocation(program, "tInput"); // https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
+
+        this.secondCanvas.texture(canvas); 
+        console.log({secondCanvas: this.secondCanvas});
+        this.secondCanvas.rect(0, 0, this.config.ui.width, this.config.ui.height - 4); 
+        this.shaders.chromaticAberration.setUniform("tInput", this.secondCanvas);
+        this.shaders.chromaticAberration.setUniform("resolution", [canvas.width, canvas.height]);
+
+        /*
+        secondCanvas.texture(mainCanvas); 
+        secondCanvas.rect(0, 0, width, height); 
+        then do this.shaders.chromaticAberration.setUniform("tInput", secondCanvas);
+        */
+
         /* Use canvas to draw the original image, and load pixel data by calling getImageData
         The ImageData.data is an one-dimentional Uint8Array with all the color elements flattened. The array contains data in the sequence of [r,g,b,a,r,g,b,a...]
         Because of the cross-origin issue, remember to run the demo in a localhost server or the getImageData call will throw error
-        */
-        const imageData = new Uint8Array(ctx.drawingBufferHeight * ctx.drawingBufferWidth * 4);
-        ctx.readPixels(0, 0, ctx.drawingBufferHeight, ctx.drawingBufferWidth, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);
 
         for (let i = phase % 4; i < imageData.length; i += 4) {
             // Setting the start of the loop to a different integer will change the aberration color, but a start integer of 4n-1 will not work
             imageData[i] = imageData[i + 4 * intensity];
         }
         ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.drawingBufferHeight, ctx.drawingBufferWidth, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);
+        */
     }
 
     draw(currentAudioFrame) {
@@ -115,10 +140,10 @@ class Visualizer {
     }
 
     drawEffects() {
-        /*if (this.config.visualizer.effects.chromaticAberration.active) {
+        if (this.config.visualizer.effects.chromaticAberration.active) {
             let canvas = document.querySelector("canvas");
             this.chromaticAberration(canvas, this.config.visualizer.effects.chromaticAberration.intensity, this.config.visualizer.effects.chromaticAberration.phase);
-        }*/
+        }
     }
 
     initBase() {

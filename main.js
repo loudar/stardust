@@ -48,7 +48,7 @@ async function setup(p) {
 
     config.ui.width = window.innerWidth;
     config.ui.height = window.innerHeight;
-    p.createCanvas(config.ui.width, config.ui.height - 4, 'webgl');
+    let mainCanvas = p.createCanvas(config.ui.width, config.ui.height - 4, 'webgl');
 
     let secondCanvas = p.createGraphics(config.ui.width, config.ui.height - 4, p.WEBGL);
 
@@ -67,7 +67,7 @@ async function setup(p) {
     let shaders = {
         chromaticAberration: p.loadShader('shaders/chromaticAberration.vert', 'shaders/chromaticAberration.frag')
     }
-    visualizer.addShaders(secondCanvas, shaders);
+    visualizer.addShaders(mainCanvas, secondCanvas, shaders);
 
     sounds = Object.values(sounds);
     playController.setSounds(sounds);

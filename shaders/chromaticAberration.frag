@@ -1,6 +1,6 @@
 precision mediump float;
 
-uniform sampler2d tInput;
+uniform sampler2d u_texture;
 uniform vec2 resolution;
 
 vec2 barrelDistortion(vec2 coord, float amount) {
@@ -47,7 +47,7 @@ void main()
 		float t = float(i) * reci_num_iter_f;
 		vec4 w = spectrum_offset( t );
 		sumw += w;
-		sumcol += w * texture2D( gl_TEXTURE_2D, barrelDistortion(uv, .6 * max_distort*t ) );
+		sumcol += w * texture2D( u_texture, barrelDistortion(uv, .6 * max_distort*t ) );
 	}
 		
 	gl_FragColor = sumcol / sumw;

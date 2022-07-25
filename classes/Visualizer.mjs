@@ -12,7 +12,8 @@ class Visualizer {
         this.setModel(this.config.visualizer.model.default);
     }
 
-    addShaders(secondCanvas, shaders) {
+    addShaders(mainCanvas, secondCanvas, shaders) {
+        this.mainCanvas = mainCanvas;
         this.secondCanvas = secondCanvas;
         this.shaders = shaders;
     }
@@ -82,7 +83,7 @@ class Visualizer {
 
         //var textureLocation = ctx.getUniformLocation(program, "tInput"); // https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
 
-        this.secondCanvas.texture(canvas); 
+        this.secondCanvas.texture(this.mainCanvas);
         console.log({secondCanvas: this.secondCanvas});
         this.secondCanvas.rect(0, 0, this.config.ui.width, this.config.ui.height - 4); 
         this.shaders.chromaticAberration.setUniform("tInput", this.secondCanvas);

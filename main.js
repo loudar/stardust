@@ -45,6 +45,7 @@ async function setup(p) {
     playController.setP5(p);
     visualizer.setP5(p);
     audioAnalyzer.setP5(p);
+    ui.setP5(p);
 
     config.ui.width = window.innerWidth;
     config.ui.height = window.innerHeight;

@@ -50,6 +50,10 @@ class Ui {
         this.changeColors();
     }
 
+    setP5(p5) {
+        this.p5 = p5;
+    }
+
     setSound(sound) {
         this.sound = sound;
     }

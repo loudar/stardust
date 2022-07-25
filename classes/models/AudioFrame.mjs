@@ -70,6 +70,7 @@ class AudioFrame {
         const peakTreshholdL = config.audio.analyze.peakThresholdLow;
         this.lastPeaks = previousFrame.lastPeaks !== undefined ? previousFrame.lastPeaks : [];
         this.waitForNextPeak = previousFrame.waitForNextPeak !== undefined ? previousFrame.waitForNextPeak : false;
+        this.peak = false;
         if (speed > peakTreshholdH && !previousFrame.waitForNextPeak) {
             if (config.audio.analyze.peakHueShift) {
                 hueShift += 30;
@@ -84,6 +85,7 @@ class AudioFrame {
                 this.lastPeaks.shift();
             }
             this.lastPeaks.push(peak);
+            this.peak = true
         } else if (speed < peakTreshholdL) {
             this.waitForNextPeak = false;
         }
@@ -98,12 +100,14 @@ class AudioFrame {
             previousFrame.perspective.yRot = 0;
         }
         let yRotation = (previousFrame.perspective.yRot + ((millisDif / 400) + this.speed.speed * .2 + this.volume.avg[0] + .5) * .35) % 360;
+        let yRotationB = (previousFrame.perspective.yRot + ((millisDif / 400) + this.speed.speed * .4 + this.volume.avg[0] + .5) * .35) % 360;
 
         this.time = {
             millis: p5.millis(),
         }
         this.perspective = {
-            yRot: yRotation
+            yRot: yRotation,
+            yRotB: yRotationB
         }
         this.colour = {
             brightness: this.speed.speed * 50,

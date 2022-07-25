@@ -76,8 +76,45 @@ class Visualizer {
         this.shaders.chromaticAberration.setUniform("resolution", [canvas.width, canvas.height]);
     }
 
+    peakSwitch() {
+        const rnd = this.p5.random(1);
+        if (this.audioFrame.peak && rnd < .1) {
+            this.themeTryRemove("default", "boxy");
+            this.themeTryRemove("default", "model");
+            this.themeTryAdd("default", "spectrum");
+        } else if (this.audioFrame.peak) {
+            this.themeTryRemove("default", "spectrum");
+            this.themeTryAdd("default", "boxy");
+            this.themeTryAdd("default", "model");
+        }
+    }
+
+    peakHighlight() {
+        if (this.audioFrame.waitForNextPeak) {
+            this.audioFrame.colour.saturation = Math.min(50, this.audioFrame.colour.saturation * 1.2);
+            this.audioFrame.colour.brightness = Math.min(100, this.audioFrame.colour.brightness);
+        } else {
+            this.audioFrame.colour.saturation = Math.min(50, this.audioFrame.colour.saturation * .5);
+            this.audioFrame.colour.brightness = Math.min(100, this.audioFrame.colour.brightness + 5);
+        }
+    }
+
+    themeTryAdd(theme, element) {
+        if (!this.themes[theme].elements.includes(element)) {
+            this.themes[theme].elements.push(element);
+        }
+    }
+
+    themeTryRemove(theme, element) {
+        if (this.themes[theme].elements.includes(element)) {
+            this.themes[theme].elements.splice(this.themes[theme].elements.indexOf(element), 1);
+        }
+    }
+
     draw(currentAudioFrame) {
         this.audioFrame = currentAudioFrame;
+        this.drawEffects();
+
         this.calculateWave();
 
         this.drawBase();
@@ -87,12 +124,10 @@ class Visualizer {
                 this.themeFunctionMap[func].call(this, currentAudioFrame);
             }
         }
-
-        this.drawEffects();
     }
 
-    drawPeaks(frame) {
-        let peaks = frame.lastPeaks;
+    drawPeaks() {
+        let peaks = this.audioFrame.lastPeaks;
         for (let i = 0; i < peaks.length; i++) {
             const peak = peaks[i];
             const peakTime = this.p5.millis() - peak.timestamp;
@@ -113,6 +148,12 @@ class Visualizer {
         if (this.config.visualizer.effects.chromaticAberration.active) {
             let canvas = document.querySelector("canvas");
             this.chromaticAberration(canvas);
+        }
+        if (this.config.visualizer.effects.peakSwitch.active) {
+            this.peakSwitch();
+        }
+        if (this.config.visualizer.effects.peakHighlight.active) {
+            this.peakHighlight();
         }
     }
 
@@ -177,7 +218,7 @@ class Visualizer {
     drawModel() {
         let upscale = 1 + (this.audioFrame.volume.avg[0] * .3);
         let rotateVector = this.p5.createVector(0, 2, 0);
-        let rotation = 2 * this.audioFrame.perspective.yRot;
+        let rotation = 2 * this.audioFrame.perspective.yRotB;
 
         this.p5.scale(upscale);
         this.p5.rotateY(-rotation, rotateVector);
@@ -331,11 +372,13 @@ class Visualizer {
             let opacity = i / this.boxy.length;
             let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
             while (hue > 360) hue -= 360;
-            opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
+            //opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
+            opacity = 1;
             let color = this.getWaveStates(boxyEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
 
             const distFromMiddle = this.p5.dist(boxyEl.x, 0, boxyEl.z, 0, 0, 0);
-            const index = Math.floor(distFromMiddle * (this.audioFrame.volume.spectrum.length - 1) / boxySize);
+            const fac = distFromMiddle / boxySize;
+            const index = Math.floor(fac * (this.audioFrame.volume.spectrum.length - 1));
 
             const loudness = this.audioFrame.volume.spectrum[index] / 255;
             const height = loudness * baseHeight * (1 - (distFromMiddle / boxySize));

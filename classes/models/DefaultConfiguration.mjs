@@ -39,11 +39,11 @@ class DefaultConfiguration {
                 smoothing: .8,
                 thresholds: [.3, .3],
                 peakThresholdHigh: .92,
-                peakThresholdLow: .85,
+                peakThresholdLow: .88,
                 peakHueShift: false,
                 volumeFunction: (v) => {
                     let e = .5 + 4 * Math.pow(v - .5, 3);
-                    return e - (e - v) * .6;
+                    return e - (e - v) * .4;
                 }
             },
             autoplay: false,
@@ -78,6 +78,12 @@ class DefaultConfiguration {
                 },
                 cameraShake: {
                     active: false
+                },
+                peakSwitch: {
+                    active: true
+                },
+                peakHighlight: {
+                    active: true
                 }
             }
         },

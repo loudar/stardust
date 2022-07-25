@@ -9,6 +9,45 @@ class Ui {
         const templates = this.getTemplates();
         this.jens = new Jens(templates);
         this.visualizer = visualizer;
+        this.visualizer.setUi(this);
+
+        this.themeSettings = [
+            {
+                id: "model",
+                label: "Enable 3D models",
+                default: this.visualizer.themes.default.elements.includes("model"),
+            },
+            {
+                id: "peaks",
+                label: "Show peaks",
+                default: this.visualizer.themes.default.elements.includes("peaks"),
+            },
+            {
+                id: "lines",
+                label: "Show lines",
+                default: this.visualizer.themes.default.elements.includes("lines"),
+            },
+            {
+                id: "circles",
+                label: "Show circles",
+                default: this.visualizer.themes.default.elements.includes("circles"),
+            },
+            {
+                id: "cubes",
+                label: "Show cubes",
+                default: this.visualizer.themes.default.elements.includes("cubes"),
+            },
+            {
+                id: "spectrum",
+                label: "Show spectrum",
+                default: this.visualizer.themes.default.elements.includes("spectrum"),
+            },
+            {
+                id: "boxy",
+                label: "Show box spectrum",
+                default: this.visualizer.themes.default.elements.includes("boxy"),
+            },
+        ];
     }
 
     getTemplates() {
@@ -83,7 +122,8 @@ class Ui {
 
     mouse = {
         down: 0
-    }
+    };
+    themeSettingPrefix = "setting_theme_";
 
     setupMouse() {
         document.body.addEventListener('mousedown', () => {
@@ -320,6 +360,20 @@ class Ui {
         }
     }
 
+    updateSettings(theme) {
+        for (const setting of this.themeSettings) {
+            const domEl = document.querySelector(`#${this.themeSettingPrefix + setting.id}`);
+            domEl.checked = false;
+        }
+        for (const el of theme.elements) {
+            const setting = this.themeSettings.filter(s => s.id === el)[0];
+            const domEl = document.querySelector(`#${this.themeSettingPrefix + setting.id}`);
+            if (domEl) {
+                domEl.checked = true;
+            }
+        }
+    }
+
     setup() {
         let body = document.querySelector("body");
         body.appendChild(this.jens.createFromTemplateName("overlay"));
@@ -363,6 +417,10 @@ class Ui {
             {
                 template: "control",
                 data: { control_id: "control_next", control_text: "NEXT", icon_src: "img/next.svg", icon_id: "icon_next", clickFunc: async () => { await this.playController.playNextSound(); }}
+            },
+            {
+                template: "control",
+                data: { control_id: "control_repeat", control_text: "REPEAT", icon_src: "img/norepeat.svg", icon_id: "icon_repeat", clickFunc: async () => { await this.playController.toggleRepeat(); }}
             },
             {
                 template: "control",
@@ -428,40 +486,16 @@ class Ui {
             }
         );
         parent = document.querySelector(".themeSettings");
-        const themeSettingMap = [
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enableModel", setting_name: "Show .obj in the center", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableModel", "model") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enablePeaks", setting_name: "Show peaks", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enablePeaks", "peaks") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enableLines", setting_name: "Show lines", setting_default: "true", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableLines", "lines") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enableCircles", setting_name: "Show circles", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableCircles", "circles") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enableRectangles", setting_name: "Show rectangles", setting_default: "true", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableRectangles", "rectangles") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enableBoxy", setting_name: "Show box spectrum", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableBoxy", "boxy") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enableSpectrum", setting_name: "Show spectrum", setting_default: "true", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableSpectrum", "spectrum") }
-            },
-        ];
-        themeSettingMap.forEach(control => {
-                let child = this.jens.createFromTemplateName(control.template, control.data);
-                if (control.data.setting_default === "true") {
-                    child.querySelector('input#'+control.data.setting_id).checked = true;
+        this.themeSettings.forEach(setting => {
+                let settingData = {
+                    setting_id: this.themeSettingPrefix + setting.id,
+                    setting_name: setting.label,
+                    setting_default: setting.default.toString(),
+                    changeFunc: this.toggleThemeSettingWithId.bind(this, this.themeSettingPrefix + setting.id, setting.id)
+                };
+                let child = this.jens.createFromTemplateName("settingBool", settingData);
+                if (setting.default) {
+                    child.querySelector('input#' + settingData.setting_id).checked = true;
                 }
                 parent.appendChild(child);
             }
@@ -475,14 +509,14 @@ class Ui {
         this.updateConfig();
     }
 
-    enableThemeSettingWithId(id, setting) {
-        this.enableThemeSetting(setting);
+    toggleThemeSettingWithId(id, setting) {
+        this.toggleThemeSetting(setting);
         const input = document.querySelector("#"+id);
         input.checked = this.visualizer.themes[this.config.visualizer.theme].elements.includes(setting);
         this.updateConfig();
     }
 
-    enableThemeSetting(setting) {
+    toggleThemeSetting(setting) {
         if (this.visualizer.themes[this.config.visualizer.theme].elements.includes(setting)) {
             this.visualizer.themes[this.config.visualizer.theme].elements.splice(this.visualizer.themes[this.config.visualizer.theme].elements.indexOf(setting), 1);
         } else {

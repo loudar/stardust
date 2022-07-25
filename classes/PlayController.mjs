@@ -131,6 +131,11 @@ class PlayController {
         this.ui.updateControls(this.sound);
     }
 
+    toggleRepeat() {
+        this.config.audio.repeat = !this.config.audio.repeat;
+        this.ui.updateControls();
+    }
+
     toggleMute() {
         this.bufferVolume = this.config.audio.userVolume === 0 ? this.bufferVolume : this.config.audio.userVolume;
         this.config.audio.userVolume = this.config.audio.userVolume === 0 ? this.bufferVolume : 0;

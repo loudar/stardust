@@ -74,7 +74,10 @@ class Layouts {
                 { tag: "div", classes: ["toggles"], attributes: {"tracklist-active": "true", "settingslist-active": "false" } },
                 { template: "trackSideBar" },
                 { tag: "div", classes: ["flex-v", "settings"], css: {display: "none"}, children: [
-                        { tag: "div", classes: ["flex-v", "themeSettings"] }
+                        { tag: "div", classes: ["flex-v", "themeSettings", "settingsSection"], children: [
+                                { tag: "h2", classes: ["settingsTitle"], text: "Theme Settings" },
+                            ]
+                        }
                     ]
                 }
             ]

@@ -38,6 +38,15 @@ body {
     display: flex;
 }
 
+.settingsTitle {
+    margin: 0;
+    padding: 10px 10px 10px 30px;
+}
+
+.settingsSection {
+    padding: 10px;
+}
+
 .trackInfoContainer {
     position: relative;
     width: 100%;
@@ -244,12 +253,14 @@ input[type=range]:focus::-webkit-slider-runnable-track {
     color: var(--background);
     display: none;
     background: var(--foreground);
-    padding: 0 5px;
-    font-weight: 900;
+    padding: 0 8px;
     border-radius: 23px;
     z-index: 2;
     position: absolute;
     right: 10px;
+    font-weight: 900;
+    font-family: monospace;
+    font-size: 16px;
 }
 
 .playingIndicator.active, .playingLoader.active {

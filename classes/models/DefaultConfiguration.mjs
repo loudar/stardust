@@ -56,7 +56,7 @@ class DefaultConfiguration {
             circles: {
                 max: 100,
             },
-            rectangles: {
+            cubes: {
                 max: 500,
             },
             lines: {

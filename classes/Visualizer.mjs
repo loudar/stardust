@@ -12,6 +12,10 @@ class Visualizer {
         this.setModel(this.config.visualizer.model.default);
     }
 
+    setUi(ui) {
+        this.ui = ui;
+    }
+
     addShaders(mainCanvas, secondCanvas, shaders) {
         this.mainCanvas = mainCanvas;
         this.secondCanvas = secondCanvas;
@@ -19,7 +23,7 @@ class Visualizer {
     }
 
     circles = [];
-    rectangles = [];
+    cubes = [];
     boxy = [];
     lines = [];
     rectDirections = [
@@ -44,12 +48,12 @@ class Visualizer {
     };
     themes = {
         "default": {
-            elements: ["rectangles", "lines", "spectrum"],
+            elements: ["cubes", "lines", "spectrum"],
         },
     };
     themeFunctionMap = {
         "circles": this.drawCircles,
-        "rectangles": this.drawRectangles,
+        "cubes": this.drawCubes,
         "lines": this.drawLines,
         "model": this.drawModel,
         "spectrum": this.drawSpectrum,
@@ -79,14 +83,15 @@ class Visualizer {
     peakSwitch() {
         const rnd = this.p5.random(1);
         if (this.audioFrame.peak && rnd < .1) {
-            this.themeTryRemove("default", "boxy");
-            this.themeTryRemove("default", "model");
-            this.themeTryAdd("default", "spectrum");
+            this.themeTryRemove(this.config.visualizer.theme, "boxy");
+            this.themeTryRemove(this.config.visualizer.theme, "model");
+            this.themeTryAdd(this.config.visualizer.theme, "spectrum");
         } else if (this.audioFrame.peak) {
-            this.themeTryRemove("default", "spectrum");
-            this.themeTryAdd("default", "boxy");
-            this.themeTryAdd("default", "model");
+            this.themeTryRemove(this.config.visualizer.theme, "spectrum");
+            this.themeTryAdd(this.config.visualizer.theme, "boxy");
+            this.themeTryAdd(this.config.visualizer.theme, "model");
         }
+        this.ui.updateSettings(this.themes[this.config.visualizer.theme]);
     }
 
     peakHighlight() {
@@ -319,20 +324,20 @@ class Visualizer {
         });
     }
 
-    drawRectangles() {
+    drawCubes() {
         if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
-            if (this.rectangles.length < this.config.visualizer.rectangles.max) {
+            if (this.cubes.length < this.config.visualizer.cubes.max) {
                 this.addRect();
             } else {
-                this.rectangles.shift();
+                this.cubes.shift();
                 this.addRect();
             }
         }
         let i = 0;
-        this.rectangles.forEach(rectEl => {
+        this.cubes.forEach(rectEl => {
             i++;
             if (rectEl.s < 16 + (20 * this.audioFrame.volume.avg[0]) && rectEl.s > 16 - (10 * this.audioFrame.volume.avg[1])) {
-                let opacity = i / this.rectangles.length;
+                let opacity = i / this.cubes.length;
                 let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
                 while (hue > 360) hue -= 360;
                 opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
@@ -555,31 +560,31 @@ class Visualizer {
 
     addRect() {
         let c, s;
-        const idCount = this.rectangles.filter(rect => rect.rectId === this.rectId).length;
-        if (idCount > this.p5.random(50, 100) || this.rectangles.length === 0) {
+        const idCount = this.cubes.filter(rect => rect.rectId === this.rectId).length;
+        if (idCount > this.p5.random(50, 100) || this.cubes.length === 0) {
             this.rectId++;
             const maxSize = 22;
             c = this.getRandomCoordinates();
             s = this.p5.random(12, maxSize);
         } else {
-            const index = this.rectangles.length - 1;
-            const offset = (this.rectangles[index].s * 2);
+            const index = this.cubes.length - 1;
+            const offset = (this.cubes[index].s * 2);
 
             const direction = this.rectDirections[this.p5.round(this.p5.random(0, 5))];
 
             c = {
-                x: this.rectangles[index].x + (direction.dx * offset),
-                y: this.rectangles[index].y + (direction.dy * offset),
-                z: this.rectangles[index].z + (direction.dz * offset)
+                x: this.cubes[index].x + (direction.dx * offset),
+                y: this.cubes[index].y + (direction.dy * offset),
+                z: this.cubes[index].z + (direction.dz * offset)
             }
             const change = .3;
-            s = this.rectangles[index].s + this.p5.random(-this.rectangles[index].s * change, this.rectangles[index].s * change);
+            s = this.cubes[index].s + this.p5.random(-this.cubes[index].s * change, this.cubes[index].s * change);
         }
         const startV = .0005;
         const vx = this.p5.random(-startV, startV);
         const vy = this.p5.random(-startV, startV);
         const vz = this.p5.random(-startV, startV);
-        this.rectangles.push({x: c.x, y: c.y, z: c.z, vx, vy, vz, s, rectId: this.rectId});
+        this.cubes.push({x: c.x, y: c.y, z: c.z, vx, vy, vz, s, rectId: this.rectId});
     }
 
     addBoxy() {

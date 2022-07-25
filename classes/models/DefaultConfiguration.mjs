@@ -63,8 +63,10 @@ class DefaultConfiguration {
                 max: 50,
             },
             boxy: {
-                rows: 4,
-                columns: 4,
+                rows: 12.0,
+                columns: 12.0,
+                size: 8,
+                gap: 20
             },
             spectrum: {
                 adjustToBase: true
@@ -72,9 +74,7 @@ class DefaultConfiguration {
             theme: "default",
             effects: {
                 chromaticAberration: {
-                    active: true,
-                    intensity: 5,
-                    phase: 0,
+                    active: false
                 },
                 cameraShake: {
                     active: false

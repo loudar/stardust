@@ -60,13 +60,23 @@ class AudioAnalyzer {
     }
 
     analyze(previousFrame) {
-        this.p5fft.analyze();
+        let spectrum = this.p5fft.analyze();
+        let volume;
+        if (this.config.audio.useMic) {
+            volume = 1.8;
+        } else {
+            volume = this.config.audio.volume;
+        }
+        for (let i = 0; i < spectrum.length; i++) {
+            spectrum[i] = Math.min(255, volume * spectrum[i]);
+        }
+
         let freq = this.getFrequencyRanges();
         let avg = [
             (freq[0] + freq[1]) / (2 * 255),
             (freq[3] + freq[4]) / (255),
         ];
-        return new AudioFrame(this.config, freq, avg, previousFrame, this.p5);
+        return new AudioFrame(this.config, freq, avg, spectrum, previousFrame, this.p5);
     }
 
     newAudioAPI() {

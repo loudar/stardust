@@ -1,10 +1,11 @@
 class AudioFrame {
     fullHueRange = 360;
 
-    constructor(config, p5volumes, average, previousFrame, p5) {
+    constructor(config, p5volumes, average, spectrum, previousFrame, p5) {
         this.volume = {
             p5: p5volumes,
             avg: average,
+            spectrum: spectrum
         }
         
         if (this.volume.avg[0] < config.audio.analyze.thresholds[0]) {

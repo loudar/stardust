@@ -68,36 +68,12 @@ class Visualizer {
         };
     }
 
-    /*
-    *  At the moment leads to crash, because too many webgl contexts are created.
-     */
-    chromaticAberration(canvas, intensity, phase){
-        // maybe like this? https://github.com/aferriss/p5jsShaderExamples/tree/gh-pages/4_image-effects/4-2_rgb-split
-
+    chromaticAberration(canvas){
         this.p5.shader(this.shaders.chromaticAberration);
-
-        let ctx = canvas.getContext("webgl");
-        
-        /*const imageData = new Uint8Array(ctx.drawingBufferHeight * ctx.drawingBufferWidth * 4);
-        ctx.readPixels(0, 0, ctx.drawingBufferHeight - 1, ctx.drawingBufferWidth - 1, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);*/
-
-        //var textureLocation = ctx.getUniformLocation(program, "tInput"); // https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html
-
         this.secondCanvas.texture(this.mainCanvas);
         this.secondCanvas.rect(0, 0, this.config.ui.width, this.config.ui.height - 4); 
         this.shaders.chromaticAberration.setUniform("u_texture", this.secondCanvas);
         this.shaders.chromaticAberration.setUniform("resolution", [canvas.width, canvas.height]);
-
-        /* Use canvas to draw the original image, and load pixel data by calling getImageData
-        The ImageData.data is an one-dimentional Uint8Array with all the color elements flattened. The array contains data in the sequence of [r,g,b,a,r,g,b,a...]
-        Because of the cross-origin issue, remember to run the demo in a localhost server or the getImageData call will throw error
-
-        for (let i = phase % 4; i < imageData.length; i += 4) {
-            // Setting the start of the loop to a different integer will change the aberration color, but a start integer of 4n-1 will not work
-            imageData[i] = imageData[i + 4 * intensity];
-        }
-        ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGBA, ctx.drawingBufferHeight, ctx.drawingBufferWidth, 0, ctx.RGBA, ctx.UNSIGNED_BYTE, imageData);
-        */
     }
 
     draw(currentAudioFrame) {
@@ -136,7 +112,7 @@ class Visualizer {
     drawEffects() {
         if (this.config.visualizer.effects.chromaticAberration.active) {
             let canvas = document.querySelector("canvas");
-            this.chromaticAberration(canvas, this.config.visualizer.effects.chromaticAberration.intensity, this.config.visualizer.effects.chromaticAberration.phase);
+            this.chromaticAberration(canvas);
         }
     }
 
@@ -340,36 +316,78 @@ class Visualizer {
     }
 
     drawBoxy() {
-        if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
-            if (this.boxy.length < this.config.visualizer.boxy.rows * this.config.visualizer.boxy.columns) {
-                this.addBoxy();
-            } else {
-                this.boxy.shift();
-                this.addBoxy();
-            }
+        if (this.boxy.length < this.config.visualizer.boxy.rows * this.config.visualizer.boxy.columns) {
+            this.addBoxy();
         }
         let i = 0;
+        let boxySize;
+        if (this.boxy.length > 0) {
+            boxySize = this.p5.dist(this.boxy[0].x, 0, this.boxy[0].z, 0, 0, 0);
+        }
+        const baseHeight = this.config.visualizer.boxy.rows * .5 * (this.config.visualizer.boxy.size + this.config.visualizer.boxy.gap) - this.config.visualizer.boxy.gap / 2;
         this.boxy.forEach(boxyEl => {
             i++;
 
             let opacity = i / this.boxy.length;
             let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
             while (hue > 360) hue -= 360;
-            //opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
-            opacity = 1;
+            opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
             let color = this.getWaveStates(boxyEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
 
-            let height = this.audioFrame.speed.factor;
+            const distFromMiddle = this.p5.dist(boxyEl.x, 0, boxyEl.z, 0, 0, 0);
+            const index = Math.floor(distFromMiddle * (this.audioFrame.volume.spectrum.length - 1) / boxySize);
+
+            const loudness = this.audioFrame.volume.spectrum[index] / 255;
+            const height = loudness * baseHeight * (1 - (distFromMiddle / boxySize));
 
             // draw
-            this.p5.translate(boxyEl.x, boxyEl.y, boxyEl.z);
-            //this.configureBoxColor(color);
-
-            this.p5.noStroke();
-            this.p5.fill(255, 255, 255, 255);
-            this.p5.box(boxyEl.s, height, boxyEl.s);
-            this.p5.translate(-boxyEl.x, -boxyEl.y, -boxyEl.z);
+            this.configureBoxColor(color);
+            let axes = [
+                'x',
+                'y',
+                'z'
+            ];
+            for (const axis of axes) {
+                this.drawSingleBoxy(boxyEl, baseHeight, axis, 1, height);
+                this.drawSingleBoxy(boxyEl, baseHeight, axis, -1, height);
+            }
         });
+    }
+
+    drawSingleBoxy(boxyEl, baseHeight, axis, inverse, height) {
+        let x, y, z, sx, sy, sz;
+        switch (axis) {
+            case 'y':
+                x = boxyEl.x;
+                y = boxyEl.y - height - baseHeight + boxyEl.s;
+                z = boxyEl.z;
+                y *= inverse;
+                sx = boxyEl.s;
+                sy = boxyEl.s;
+                sz = boxyEl.s;
+                break;
+            case 'x':
+                x = boxyEl.y + height + baseHeight - boxyEl.s;
+                y = boxyEl.x;
+                z = boxyEl.z;
+                x *= inverse;
+                sx = boxyEl.s;
+                sy = boxyEl.s;
+                sz = boxyEl.s;
+                break;
+            case 'z':
+                x = boxyEl.x;
+                y = boxyEl.z;
+                z = boxyEl.y + height + baseHeight - boxyEl.s;
+                z *= inverse;
+                sx = boxyEl.s;
+                sy = boxyEl.s;
+                sz = boxyEl.s;
+                break;
+        }
+        this.p5.translate(x, -y, z);
+        this.p5.box(sx, -sy, sz);
+        this.p5.translate(-x, y, -z);
     }
 
     configureBoxColor(color) {
@@ -522,20 +540,20 @@ class Visualizer {
     }
 
     addBoxy() {
-        let count = this.config.visualizer.boxy.rows * this.config.visualizer.boxy.columns;
-        let s = 12;
-        let g = s / 4;
-        let w = (s + g) * count - g;
+        let s = this.config.visualizer.boxy.size;
+        let g = this.config.visualizer.boxy.gap;
         let i = this.boxy.length;
         const o = {
-            x: -w / 2,
+            x: -(this.config.visualizer.boxy.rows / 2) * (s + g),
             y: 0,
-            z: -w / 2
+            z: -(this.config.visualizer.boxy.columns / 2) * (s + g)
         }
+        const rowFactor = parseFloat(i.toString()) % this.config.visualizer.boxy.rows;
+        const columnFactor = Math.floor(parseFloat(i.toString()) / this.config.visualizer.boxy.columns);
         const c = {
-            x: o.x + ((i % this.config.visualizer.boxy.rows) * w * (s + g)),
-            y: 0,
-            z: o.z + ((i % this.config.visualizer.boxy.columns) * w * (s + g))
+            x: o.x + rowFactor * (s + g),
+            y: o.y,
+            z: o.z + columnFactor * (s + g)
         }
         this.boxy.push({
             x: c.x, y: c.y, z: c.z,

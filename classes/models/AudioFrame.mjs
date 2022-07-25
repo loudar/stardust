@@ -19,8 +19,34 @@ class AudioFrame {
             this.volume.avg[1] = Math.pow((this.volume.avg[1] - config.audio.analyze.thresholds[1]) / (1 - config.audio.analyze.thresholds[1]), 4)
         }
 
-        let speed = Math.min(1, (this.volume.avg[0] + this.volume.avg[1]) * .5);
+        let highToLow = .5;
+        let speed = Math.min(1, (this.volume.avg[0] / highToLow + this.volume.avg[1] * highToLow) * .5);
         speed = config.audio.analyze.volumeFunction(speed);
+        this.speeds = previousFrame.speeds || [];
+        this.speeds.push(speed);
+        if (this.speeds.length > 100) {
+            this.speeds.shift();
+        }
+        let sum = 0;
+        for (let i = 0; i < this.speeds.length; i++) {
+            sum += this.speeds[i];
+        }
+        let walkingAverage = sum / this.speeds.length;
+
+        this.maxSpeed = previousFrame.maxSpeed !== undefined ? previousFrame.maxSpeed : {value: 0, timestamp: p5.millis()};
+        if (this.maxSpeed.timestamp + 10 * 1000 < p5.millis()) {
+            this.maxSpeed.value = 0;
+            this.maxSpeed.timestamp = p5.millis();
+        }
+        if (speed > this.maxSpeed.value) {
+            this.maxSpeed = {
+                value: speed,
+                timestamp: p5.millis()
+            }
+        }
+        if (walkingAverage > .5) {
+            speed = speed * (1 / this.maxSpeed.value);
+        }
 
         if (isNaN(previousFrame.colour.hueShift)) {
             previousFrame.colour.hueShift = 0;

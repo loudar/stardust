@@ -14,6 +14,7 @@ class Visualizer {
 
     circles = [];
     rectangles = [];
+    boxy = [];
     lines = [];
     rectDirections = [
         {dx: -1, dy: 0, dz: 0},
@@ -46,7 +47,8 @@ class Visualizer {
         "lines": this.drawLines,
         "model": this.drawModel,
         "spectrum": this.drawSpectrum,
-        "peaks": this.drawPeaks
+        "peaks": this.drawPeaks,
+        "boxy": this.drawBoxy,
     };
 
     setModels(models) {
@@ -60,6 +62,9 @@ class Visualizer {
         };
     }
 
+    /*
+    *  At the moment leads to crash, because too many webgl contexts are created.
+     */
     chromaticAberration(canvas, intensity, phase){
         let ctx = canvas.getContext("webgl");
         /* Use canvas to draw the original image, and load pixel data by calling getImageData
@@ -98,23 +103,15 @@ class Visualizer {
             const peakTime = this.p5.millis() - peak.timestamp;
 
             this.drawPeak(peakTime / 10);
-            //this.drawPeak(- peakTime / 10);
         }
     }
 
     drawPeak(x) {
-        //this.p5.translate(-x, - 20, -20);
-
-        const f = 1 - Math.min(1, x / 500);
+        const f = 1 - Math.min(1, x / 400);
         this.p5.noFill();
         this.p5.stroke(Math.floor(255 * f));
 
-        /*this.p5.fill(255, 255, 255, 255);
-        this.p5.box(1, 150, 1);*/
         this.p5.circle(0, 0, x);
-        //this.p5.noSmooth();
-
-        //this.p5.translate(x, 20, 20);
     }
 
     drawEffects() {
@@ -263,18 +260,14 @@ class Visualizer {
             opacity *= opacity;
             let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift + (circleEl.hOffset / 10);
             while (hue > 360) hue -= 360;
-            let satResults = this.getWaveStates(circleEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
-            let specificSat = satResults.specificSat;
-            let specificBright = satResults.specificBright;
-            opacity = satResults.opacity;
-            hue = satResults.hue;
+            let color = this.getWaveStates(circleEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
 
             // draw
             this.p5.translate(circleEl.x, circleEl.y, circleEl.z);
             if (this.config.colour.mode !== 1) {
-                this.p5.stroke(hue, specificSat, specificBright, opacity * this.audioFrame.speed.factor);
+                this.p5.stroke(color.h, color.s, color.b, color.o * this.audioFrame.speed.factor);
             } else {
-                this.p5.stroke(hue, specificSat, 100 - specificBright, opacity * this.audioFrame.speed.factor * specificBright);
+                this.p5.stroke(color.h, color.s, 100 - color.b, color.o * this.audioFrame.speed.factor * color.b);
             }
             this.p5.noFill();
             this.p5.circle(0, 0, circleEl.size);
@@ -307,23 +300,11 @@ class Visualizer {
                 let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
                 while (hue > 360) hue -= 360;
                 opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
-                let satResults = this.getWaveStates(rectEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
-                let specificSat = satResults.specificSat;
-                let specificBright = satResults.specificBright;
-                opacity = satResults.opacity;
-                hue = satResults.hue;
-                let alpha = opacity * (this.audioFrame.colour.brightness / 50) * (this.audioFrame.colour.saturation / 100);
+                let color = this.getWaveStates(rectEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
 
                 // draw
                 this.p5.translate(rectEl.x, rectEl.y, rectEl.z);
-
-                if (this.config.colour.mode !== 1) {
-                    this.p5.fill(hue, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, alpha);
-                    this.p5.stroke(hue, specificSat, specificBright, (1 - opacity) * this.audioFrame.speed.factor);
-                } else {
-                    this.p5.fill(hue, this.audioFrame.colour.saturation, 100 - this.audioFrame.colour.brightness, alpha);
-                    this.p5.stroke(hue, specificSat, 100 - specificBright, (1 - opacity) * this.audioFrame.speed.factor);
-                }
+                this.configureBoxColor(color);
                 this.p5.box(rectEl.s);
                 this.p5.translate(-rectEl.x, -rectEl.y, -rectEl.z);
             }
@@ -337,6 +318,50 @@ class Visualizer {
             rectEl.y += rectEl.vy * this.audioFrame.speed.factor;
             rectEl.z += rectEl.vz * this.audioFrame.speed.factor;
         });
+    }
+
+    drawBoxy() {
+        if (this.p5.frameCount % this.p5.round(16 / this.audioFrame.speed.factor) === 0) {
+            if (this.boxy.length < this.config.visualizer.boxy.rows * this.config.visualizer.boxy.columns) {
+                this.addBoxy();
+            } else {
+                this.boxy.shift();
+                this.addBoxy();
+            }
+        }
+        let i = 0;
+        this.boxy.forEach(boxyEl => {
+            i++;
+
+            let opacity = i / this.boxy.length;
+            let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
+            while (hue > 360) hue -= 360;
+            //opacity = Math.max(0, opacity - this.p5.random(0, 0.1));
+            opacity = 1;
+            let color = this.getWaveStates(boxyEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
+
+            let height = this.audioFrame.speed.factor;
+
+            // draw
+            this.p5.translate(boxyEl.x, boxyEl.y, boxyEl.z);
+            //this.configureBoxColor(color);
+
+            this.p5.noStroke();
+            this.p5.fill(255, 255, 255, 255);
+            this.p5.box(boxyEl.s, height, boxyEl.s);
+            this.p5.translate(-boxyEl.x, -boxyEl.y, -boxyEl.z);
+        });
+    }
+
+    configureBoxColor(color) {
+        let alpha = color.o * (this.audioFrame.colour.brightness / 50) * (this.audioFrame.colour.saturation / 100);
+        if (this.config.colour.mode !== 1) {
+            this.p5.fill(color.h, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, alpha);
+            this.p5.stroke(color.h, color.s, color.b, (1 - color.o) * this.audioFrame.speed.factor);
+        } else {
+            this.p5.fill(color.h, this.audioFrame.colour.saturation, 100 - this.audioFrame.colour.brightness, alpha);
+            this.p5.stroke(color.h, color.s, 100 - color.b, (1 - color.o) * this.audioFrame.speed.factor);
+        }
     }
 
     drawLines() {
@@ -355,18 +380,14 @@ class Visualizer {
             let hue = (opacity * this.audioFrame.colour.hueArea) + this.audioFrame.colour.hueShift;
             while (hue > 360) hue -= 360;
             opacity = this.p5.max(0, opacity - this.p5.random(0, 0.1));
-            let satResults = this.getWaveStates(lineEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
-            let specificSat = satResults.specificSat;
-            let specificBright = satResults.specificBright;
-            opacity = satResults.opacity;
-            hue = satResults.hue;
+            let color = this.getWaveStates(lineEl.x, this.audioFrame.colour.saturation, this.audioFrame.colour.brightness, opacity, hue);
 
             // draw
-            opacity = opacity * this.audioFrame.speed.factor * this.p5.random(0.5, 1.5);
+            color.o = color.o * this.audioFrame.speed.factor * this.p5.random(0.5, 1.5);
             if (this.config.colour.mode !== 1) {
-                this.p5.stroke(hue, specificSat, specificBright, opacity * this.audioFrame.volume.avg[0]);
+                this.p5.stroke(color.h, color.s, color.b, color.o * this.audioFrame.volume.avg[0]);
             } else {
-                this.p5.stroke(hue, specificSat, 100 - specificBright, opacity * this.audioFrame.volume.avg[0]);
+                this.p5.stroke(color.h, color.s, 100 - color.b, color.o * this.audioFrame.volume.avg[0]);
             }
             if ((opacity > .8 && this.audioFrame.volume.avg[0] > .5) || this.p5.random(0, 1) > .999) {
                 this.p5.line(lineEl.x, lineEl.y, lineEl.z, lineEl.x2, lineEl.y2, lineEl.z2);
@@ -414,8 +435,7 @@ class Visualizer {
             specificSat = saturation;
             specificBright = brightness;
         }
-        //return {specificSat, specificBright, opacity, hue};
-        return {specificSat: saturation, specificBright: brightness, opacity, hue};
+        return {s: specificSat, b: specificBright, o: opacity, h: hue};
     }
 
     calculateWave() {
@@ -435,29 +455,31 @@ class Visualizer {
         }
     }
 
+    getRandomCoordinates() {
+        let x = this.p5.random(-this.config.ui.width / 2, this.config.ui.width / 2);
+        let y = this.p5.random(-this.config.ui.height / 2, this.config.ui.height / 2);
+        let z = this.p5.random(-this.config.ui.width, this.config.ui.width);
+        return {x, y, z};
+    }
+
     addCircle() {
-        let x, y, z;
-        x = this.p5.random(-this.config.ui.width / 2, this.config.ui.width / 2);
-        y = this.p5.random(-this.config.ui.height / 2, this.config.ui.height / 2);
-        z = this.p5.random(-this.config.ui.width, this.config.ui.width);
+        const c = this.getRandomCoordinates();
         const startV = .2;
         const vx = this.p5.random(-startV, startV);
         const vy = this.p5.random(-startV, startV);
         const vz = this.p5.random(-startV, startV);
         const size = this.p5.random(1, 40);
         const hOffset = this.p5.random(0, 360);
-        this.circles.push({x, y, z, vx, vy, vz, size, hOffset});
+        this.circles.push({x: c.x, y: c.y, z: c.z, vx, vy, vz, size, hOffset});
     }
 
     addRect() {
-        let x, y, z, s;
+        let c, s;
         const idCount = this.rectangles.filter(rect => rect.rectId === this.rectId).length;
         if (idCount > this.p5.random(50, 100) || this.rectangles.length === 0) {
             this.rectId++;
             const maxSize = 22;
-            x = this.p5.random(-this.config.ui.width / 2, this.config.ui.width / 2);
-            y = this.p5.random(-this.config.ui.height / 2, this.config.ui.height / 2);
-            z = this.p5.random(-this.config.ui.width, this.config.ui.width);
+            c = this.getRandomCoordinates();
             s = this.p5.random(12, maxSize);
         } else {
             const index = this.rectangles.length - 1;
@@ -465,9 +487,11 @@ class Visualizer {
 
             const direction = this.rectDirections[this.p5.round(this.p5.random(0, 5))];
 
-            x = this.rectangles[index].x + (direction.dx * offset);
-            y = this.rectangles[index].y + (direction.dy * offset);
-            z = this.rectangles[index].z + (direction.dz * offset);
+            c = {
+                x: this.rectangles[index].x + (direction.dx * offset),
+                y: this.rectangles[index].y + (direction.dy * offset),
+                z: this.rectangles[index].z + (direction.dz * offset)
+            }
             const change = .3;
             s = this.rectangles[index].s + this.p5.random(-this.rectangles[index].s * change, this.rectangles[index].s * change);
         }
@@ -475,42 +499,71 @@ class Visualizer {
         const vx = this.p5.random(-startV, startV);
         const vy = this.p5.random(-startV, startV);
         const vz = this.p5.random(-startV, startV);
-        this.rectangles.push({x, y, z, vx, vy, vz, s, rectId: this.rectId});
+        this.rectangles.push({x: c.x, y: c.y, z: c.z, vx, vy, vz, s, rectId: this.rectId});
+    }
+
+    addBoxy() {
+        let count = this.config.visualizer.boxy.rows * this.config.visualizer.boxy.columns;
+        let s = 12;
+        let g = s / 4;
+        let w = (s + g) * count - g;
+        let i = this.boxy.length;
+        const o = {
+            x: -w / 2,
+            y: 0,
+            z: -w / 2
+        }
+        const c = {
+            x: o.x + ((i % this.config.visualizer.boxy.rows) * w * (s + g)),
+            y: 0,
+            z: o.z + ((i % this.config.visualizer.boxy.columns) * w * (s + g))
+        }
+        this.boxy.push({
+            x: c.x, y: c.y, z: c.z,
+            s
+        });
     }
 
     addLine() {
-        let x, y, z, x2, y2, z2;
+        let c;
         let vx, vy, vz, vx2, vy2, vz2;
-        const dist = 500;
         const idCount = this.lines.filter(line => line.lineId === this.lineId).length;
         const startV = .0005;
         if (idCount > this.p5.random(10, 100) || this.lines.length === 0) {
             this.lineId++;
-            x = this.p5.random(-this.config.ui.width / 2, this.config.ui.width / 2);
-            y = this.p5.random(-this.config.ui.height / 2, this.config.ui.height / 2);
-            z = this.p5.random(-this.config.ui.width, this.config.ui.width);
-            x2 = x + this.p5.random(-dist, dist);
-            y2 = y + this.p5.random(-dist, dist);
-            z2 = z + this.p5.random(-dist, dist);
+            c = this.getRandomCoordinates();
             vx = this.p5.random(-startV, startV);
             vy = this.p5.random(-startV, startV);
             vz = this.p5.random(-startV, startV);
         } else {
             const index = this.lines.length - 1;
-            x = this.lines[index].x2;
-            y = this.lines[index].y2;
-            z = this.lines[index].z2;
+            c = {
+                x: this.lines[index].x2,
+                y: this.lines[index].y2,
+                z: this.lines[index].z2
+            };
             vx = this.lines[index].vx2;
             vy = this.lines[index].vy2;
             vz = this.lines[index].vz2;
-            x2 = x + this.p5.random(-dist, dist);
-            y2 = y + this.p5.random(-dist, dist);
-            z2 = z + this.p5.random(-dist, dist);
         }
+        let c2 = this.getRandomCoordinateWithDistance(c, 500);
         vx2 = this.p5.random(-startV, startV);
         vy2 = this.p5.random(-startV, startV);
         vz2 = this.p5.random(-startV, startV);
-        this.lines.push({x, y, z, x2, y2, z2, vx, vy, vz, vx2, vy2, vz2, lineId: this.lineId});
+        this.lines.push({
+            x: c.x, y: c.y, z: c.z,
+            x2: c2.x, y2: c2.y, z2: c2.z,
+            vx, vy, vz,
+            vx2, vy2, vz2,
+            lineId: this.lineId
+        });
+    }
+
+    getRandomCoordinateWithDistance(c, dist) {
+        let x = c.x + this.p5.random(-dist, dist);
+        let y = c.y + this.p5.random(-dist, dist);
+        let z = c.z + this.p5.random(-dist, dist);
+        return {x, y, z};
     }
 
     rectId = 0;

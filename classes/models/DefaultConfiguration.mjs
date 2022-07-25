@@ -38,8 +38,8 @@ class DefaultConfiguration {
             analyze: {
                 smoothing: .8,
                 thresholds: [.3, .3],
-                peakThresholdHigh: .99,
-                peakThresholdLow: .9,
+                peakThresholdHigh: .92,
+                peakThresholdLow: .85,
                 peakHueShift: false,
                 volumeFunction: (v) => {
                     let e = .5 + 4 * Math.pow(v - .5, 3);
@@ -61,6 +61,10 @@ class DefaultConfiguration {
             },
             lines: {
                 max: 50,
+            },
+            boxy: {
+                rows: 4,
+                columns: 4,
             },
             spectrum: {
                 adjustToBase: true

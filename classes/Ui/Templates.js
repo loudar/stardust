@@ -73,7 +73,10 @@ class Layouts {
             tag: "div", classes: ["overlay"], children: [
                 { tag: "div", classes: ["toggles"], attributes: {"tracklist-active": "true", "settingslist-active": "false" } },
                 { template: "trackSideBar" },
-                { tag: "div", classes: ["flex-v", "settings"], css: {display: "none"} }
+                { tag: "div", classes: ["flex-v", "settings"], css: {display: "none"}, children: [
+                        { tag: "div", classes: ["flex-v", "themeSettings"] }
+                    ]
+                }
             ]
         },
         trackSideBar: {

@@ -350,7 +350,15 @@ class Ui {
         const controlMap = [
             {
                 template: "control",
+                data: { control_id: "control_previous", control_text: "PREVIOUS", icon_src: "img/previous.svg", icon_id: "icon_previous", clickFunc: async () => { await this.playController.playPreviousSound(); }}
+            },
+            {
+                template: "control",
                 data: { control_id: "control_play", control_text: "PLAY", icon_src: "img/play.svg", icon_id: "icon_play", clickFunc: async () => { await this.playController.togglePlay(); }}
+            },
+            {
+                template: "control",
+                data: { control_id: "control_next", control_text: "NEXT", icon_src: "img/next.svg", icon_id: "icon_next", clickFunc: async () => { await this.playController.playNextSound(); }}
             },
             {
                 template: "control",
@@ -400,14 +408,6 @@ class Ui {
             },
             {
                 template: "settingBool",
-                data: { setting_id: "setting_enableModel", setting_name: "Show .obj in the center", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableModel", "model") }
-            },
-            {
-                template: "settingBool",
-                data: { setting_id: "setting_enablePeaks", setting_name: "Show peaks", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enablePeaks", "peaks") }
-            },
-            {
-                template: "settingBool",
                 data: { setting_id: "setting_peakHueShift", setting_name: "Shift hue on peaks", setting_default: this.config.audio.analyze.peakHueShift.toString(), changeFunc: this.togglePeakHueShift.bind(this) }
             },
             {
@@ -416,6 +416,45 @@ class Ui {
             }
         ];
         settingMap.forEach(control => {
+                let child = this.jens.createFromTemplateName(control.template, control.data);
+                if (control.data.setting_default === "true") {
+                    child.querySelector('input#'+control.data.setting_id).checked = true;
+                }
+                parent.appendChild(child);
+            }
+        );
+        parent = document.querySelector(".themeSettings");
+        const themeSettingMap = [
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableModel", setting_name: "Show .obj in the center", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableModel", "model") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enablePeaks", setting_name: "Show peaks", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enablePeaks", "peaks") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableLines", setting_name: "Show lines", setting_default: "true", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableLines", "lines") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableCircles", setting_name: "Show circles", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableCircles", "circles") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableRectangles", setting_name: "Show rectangles", setting_default: "true", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableRectangles", "rectangles") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableBoxy", setting_name: "Show box spectrum", setting_default: "false", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableBoxy", "boxy") }
+            },
+            {
+                template: "settingBool",
+                data: { setting_id: "setting_enableSpectrum", setting_name: "Show spectrum", setting_default: "true", changeFunc: this.enableThemeSettingWithId.bind(this, "setting_enableSpectrum", "spectrum") }
+            },
+        ];
+        themeSettingMap.forEach(control => {
                 let child = this.jens.createFromTemplateName(control.template, control.data);
                 if (control.data.setting_default === "true") {
                     child.querySelector('input#'+control.data.setting_id).checked = true;

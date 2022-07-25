@@ -1,6 +1,6 @@
 precision mediump float;
 
-uniform sampler2d u_texture;
+uniform sampler2D u_texture;
 uniform vec2 resolution;
 
 vec2 barrelDistortion(vec2 coord, float amount) {
@@ -32,7 +32,7 @@ vec4 spectrum_offset( float t ) {
 	return pow( ret, vec4(1.0/2.2) );
 }
 
-const float max_distort = 2.2;
+const float max_distort = 20.0;
 const int num_iter = 12;
 const float reci_num_iter_f = 1.0 / float(num_iter);
 

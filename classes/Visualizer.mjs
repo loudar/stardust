@@ -16,10 +16,13 @@ class Visualizer {
         this.ui = ui;
     }
 
-    addShaders(mainCanvas, secondCanvas, shaders) {
+    addCanvas(mainCanvas, secondCanvas) {
         this.mainCanvas = mainCanvas;
         this.secondCanvas = secondCanvas;
-        this.shaders = shaders;
+    }
+
+    addShader(name, shader) {
+        this.shaders[name] = shader;
     }
 
     circles = [];
@@ -60,6 +63,7 @@ class Visualizer {
         "peaks": this.drawPeaks,
         "boxy": this.drawBoxy,
     };
+    shaders = {};
 
     setModels(models) {
         this.models = models;
@@ -73,11 +77,12 @@ class Visualizer {
     }
 
     chromaticAberration(canvas){
-        this.p5.shader(this.shaders.chromaticAberration);
+        if (this.shaders["chromaticAberration"] === undefined) return;
+        this.p5.shader(this.shaders["chromaticAberration"]);
         this.secondCanvas.texture(this.mainCanvas);
         this.secondCanvas.rect(0, 0, this.config.ui.width, this.config.ui.height - 4); 
-        this.shaders.chromaticAberration.setUniform("u_texture", this.secondCanvas);
-        this.shaders.chromaticAberration.setUniform("resolution", [canvas.width, canvas.height]);
+        this.shaders["chromaticAberration"].setUniform("tex0", this.secondCanvas);
+        this.shaders["chromaticAberration"].setUniform("resolution", [canvas.width, canvas.height]);
     }
 
     peakSwitch() {

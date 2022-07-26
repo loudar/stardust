@@ -19,6 +19,28 @@ class Visualizer {
     addCanvas(mainCanvas, secondCanvas) {
         this.mainCanvas = mainCanvas;
         this.secondCanvas = secondCanvas;
+        this.addShaders();
+    }
+
+    shaderDefinitions = {
+        chromaticAberration: {
+            file: "chromaticAberration2",
+            display: "Chromatic Aberration"
+        }
+    }
+    shaders = {};
+
+    addShaders() {
+        this.shaderDefinitions.forEach(shaderDef => {
+            const [key, s] = shaderDef;
+            this.p5.loadShader('shaders/'+s.file+'.vert', 'shaders/'+s.file+'.frag', (shader) => {
+                console.info("%cSTARDUST: Loaded shader: " + s.display, "color: #00ff00;");
+                this.addShader(key, shader);
+            }, (e) => {
+                console.error("P5: " + e);
+                console.error("STARDUST: Error loading shader: "  + s.display);
+            });
+        });
     }
 
     addShader(name, shader) {
@@ -63,7 +85,6 @@ class Visualizer {
         "peaks": this.drawPeaks,
         "boxy": this.drawBoxy,
     };
-    shaders = {};
 
     setModels(models) {
         this.models = models;

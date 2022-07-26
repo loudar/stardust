@@ -66,13 +66,6 @@ async function setup(p) {
 
     console.info("STARDUST: Loading shaders...");
     visualizer.addCanvas(mainCanvas, secondCanvas);
-    p.loadShader('shaders/chromaticAberration2.vert', 'shaders/chromaticAberration2.frag', (shader) => {
-        console.info("%cSTARDUST: Loaded shader: Chromatic Aberration", "color: #00ff00;");
-        visualizer.addShader("chromaticAberration", shader);
-    }, (e) => {
-        console.error("P5: " + e);
-        console.error("STARDUST: Error loading shader: Chromatic Aberration");
-    });
 
     sounds = Object.values(sounds);
     playController.setSounds(sounds);

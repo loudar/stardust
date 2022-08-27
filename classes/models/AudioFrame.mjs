@@ -71,7 +71,8 @@ class AudioFrame {
         this.lastPeaks = previousFrame.lastPeaks !== undefined ? previousFrame.lastPeaks : [];
         this.waitForNextPeak = previousFrame.waitForNextPeak !== undefined ? previousFrame.waitForNextPeak : false;
         this.peak = false;
-        if (speed > peakTreshholdH && !previousFrame.waitForNextPeak) {
+        const peakDeviation = 0.2;
+        if (this.volume.avg > previousFrame.volume.avg * (1 + peakDeviation) && !previousFrame.waitForNextPeak) {
             if (config.audio.analyze.peakHueShift) {
                 hueShift += 30;
                 if (hueShift >= this.fullHueRange) hueShift -= this.fullHueRange;

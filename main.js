@@ -10,9 +10,9 @@ let config = (new DefaultConfiguration()).get();
 const configSpreader = new ConfigSpreader(config);
 
 const audioAnalyzer = new AudioAnalyzer(config);
-const visualizer = new Visualizer(config);
+const visualizer = new Visualizer(config, configSpreader);
 const ui = new Ui(config, configSpreader, visualizer);
-const playController = new PlayController(config, ui, audioAnalyzer, visualizer);
+const playController = new PlayController(config, ui, audioAnalyzer, visualizer, configSpreader);
 
 // pass play controller to ui because we can't initialize both while knowing about the other
 ui.setPlayController(playController);

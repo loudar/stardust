@@ -49,6 +49,7 @@ class DefaultConfiguration {
             autoplay: false,
         },
         visualizer: {
+            zoom: 1,
             model: {
                 current: "",
                 default: "models/stardust.obj"

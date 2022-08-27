@@ -1,6 +1,7 @@
 class Visualizer {
-    constructor(config) {
+    constructor(config, configSpreader) {
         this.config = config;
+        this.configSpreader = configSpreader;
     }
 
     setConfig(config) {
@@ -179,12 +180,13 @@ class Visualizer {
     }
 
     setCamera() {
+        let camDist = this.config.visualizer.zoom;
         if (this.config.visualizer.effects.cameraShake.active) {
-            this.p5.camera(0, 0, this.config.ui.cameraDistance + (this.audioFrame.speed.factor * this.config.ui.height * .001));
+            camDist *= this.config.ui.cameraDistance + (this.audioFrame.speed.factor * this.config.ui.height * .001);
         } else {
-            this.p5.camera(0, 0, this.config.ui.cameraDistance);
+            camDist *= this.config.ui.cameraDistance;
         }
-
+        this.p5.camera(0, 0, camDist);
         this.p5.rotateY(this.audioFrame.perspective.yRot);
     }
 

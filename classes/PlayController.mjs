@@ -21,12 +21,13 @@ class Timer {
 }
 
 class PlayController {
-    constructor(config, ui, analyzer, visualizer) {
+    constructor(config, ui, analyzer, visualizer, configSpreader) {
         this.setConfig(config);
         this.ui = ui;
         this.analyzer = analyzer;
         this.visualizer = visualizer;
         this.timer = new Timer(500);
+        this.configSpreader = configSpreader;
     }
 
     setP5(processing) {
@@ -46,6 +47,10 @@ class PlayController {
         this.config = config;
         this.initializeKeybinds();
         this.updateVolume();
+    }
+
+    updateConfig(config) {
+        this.configSpreader.spread(config);
     }
 
     updateVolume() {
@@ -93,6 +98,13 @@ class PlayController {
 
         this.removeKeybinds();
         window.addEventListener('keydown', this.checkBindsEvent);
+        window.addEventListener('wheel', (e) => {
+            if (e.target.tagName.toLowerCase() !== "canvas") {
+                return;
+            }
+            let delta = 1 + (Math.sign(e.deltaY) * .1);
+            this.config.visualizer.zoom = Math.max(0.2, Math.min(2, this.config.visualizer.zoom * delta));
+        });
     }
 
     removeKeybinds() {

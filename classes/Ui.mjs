@@ -18,6 +18,7 @@ class Ui {
                 default: this.visualizer.themes.default.elements.includes("model"),
             },
             {
+
                 id: "peaks",
                 label: "Show peaks",
                 default: this.visualizer.themes.default.elements.includes("peaks"),

@@ -17,10 +17,35 @@ class Visualizer {
         this.ui = ui;
     }
 
-    addShaders(mainCanvas, secondCanvas, shaders) {
+    addCanvas(mainCanvas, secondCanvas) {
         this.mainCanvas = mainCanvas;
         this.secondCanvas = secondCanvas;
-        this.shaders = shaders;
+        this.addShaders();
+    }
+
+    shaderDefinitions = {
+        chromaticAberration: {
+            file: "chromaticAberration2",
+            display: "Chromatic Aberration"
+        }
+    }
+    shaders = {};
+
+    addShaders() {
+        this.shaderDefinitions.forEach(shaderDef => {
+            const [key, s] = shaderDef;
+            this.p5.loadShader('shaders/'+s.file+'.vert', 'shaders/'+s.file+'.frag', (shader) => {
+                console.info("%cSTARDUST: Loaded shader: " + s.display, "color: #00ff00;");
+                this.addShader(key, shader);
+            }, (e) => {
+                console.error("P5: " + e);
+                console.error("STARDUST: Error loading shader: "  + s.display);
+            });
+        });
+    }
+
+    addShader(name, shader) {
+        this.shaders[name] = shader;
     }
 
     circles = [];
@@ -74,11 +99,12 @@ class Visualizer {
     }
 
     chromaticAberration(canvas){
-        this.p5.shader(this.shaders.chromaticAberration);
+        if (this.shaders["chromaticAberration"] === undefined) return;
+        this.p5.shader(this.shaders["chromaticAberration"]);
         this.secondCanvas.texture(this.mainCanvas);
         this.secondCanvas.rect(0, 0, this.config.ui.width, this.config.ui.height - 4); 
-        this.shaders.chromaticAberration.setUniform("u_texture", this.secondCanvas);
-        this.shaders.chromaticAberration.setUniform("resolution", [canvas.width, canvas.height]);
+        this.shaders["chromaticAberration"].setUniform("tex0", this.secondCanvas);
+        this.shaders["chromaticAberration"].setUniform("resolution", [canvas.width, canvas.height]);
     }
 
     peakSwitch() {

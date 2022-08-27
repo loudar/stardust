@@ -75,7 +75,7 @@ class DefaultConfiguration {
             theme: "default",
             effects: {
                 chromaticAberration: {
-                    active: false
+                    active: true
                 },
                 cameraShake: {
                     active: false

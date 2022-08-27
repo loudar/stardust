@@ -65,10 +65,7 @@ async function setup(p) {
     models = await models.json();
 
     console.info("STARDUST: Loading shaders...");
-    let shaders = {
-        chromaticAberration: p.loadShader('shaders/chromaticAberration.vert', 'shaders/chromaticAberration.frag')
-    }
-    visualizer.addShaders(mainCanvas, secondCanvas, shaders);
+    visualizer.addCanvas(mainCanvas, secondCanvas);
 
     sounds = Object.values(sounds);
     playController.setSounds(sounds);

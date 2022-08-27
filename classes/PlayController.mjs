@@ -95,22 +95,27 @@ class PlayController {
 
     initializeKeybinds() {
         this.checkBindsEvent = this.checkBindsEvent ?? this.checkKeybinds.bind(this);
+        this.checkMouseWheelEvent = this.checkMouseWheelEvent ?? this.checkMouseWheel.bind(this);
 
         this.removeKeybinds();
         window.addEventListener('keydown', this.checkBindsEvent);
-        window.addEventListener('wheel', (e) => {
-            if (e.target.tagName.toLowerCase() !== "canvas") {
-                return;
-            }
-            let delta = 1 + (Math.sign(e.deltaY) * .1);
-            this.config.visualizer.zoom = Math.max(0.2, Math.min(2, this.config.visualizer.zoom * delta));
-        });
+        window.addEventListener('wheel', this.checkMouseWheelEvent);
     }
 
     removeKeybinds() {
         this.checkBindsEvent = this.checkBindsEvent ?? this.checkKeybinds.bind(this);
+        this.checkMouseWheelEvent = this.checkMouseWheelEvent ?? this.checkMouseWheel.bind(this);
 
         window.removeEventListener('keydown', this.checkBindsEvent);
+        window.removeEventListener('wheel', this.checkMouseWheelEvent);
+    }
+
+    checkMouseWheel(e) {
+        if (e.target.tagName.toLowerCase() !== "canvas") {
+            return;
+        }
+        let delta = 1 + (Math.sign(e.deltaY) * .1);
+        this.config.visualizer.zoom = Math.max(0.2, Math.min(2, this.config.visualizer.zoom * delta));
     }
 
     async checkKeybinds(e) {
